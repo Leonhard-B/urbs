@@ -5,7 +5,12 @@ import shutil
 import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
-#This line is a check for git
+
+#Für später:
+#import time
+#start_time = time.time()
+#print("--- %s seconds ---" % (time.time() - start_time))
+
 
 # SCENARIOS
 def scenario_base(data):
@@ -110,7 +115,10 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     Returns:
         the urbs model instance
     """
-
+#Meine Ideen: 
+	#Lese Daten nur zu Beginn des Programms ein
+	#Kopiere die Blaupause des Standard Szenarios und modifiziere die variablen Parameter, um das entsprechende Modell für das Szenario zu erstellen
+	
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = urbs.read_excel(input_file)
@@ -201,12 +209,9 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        scenario_stock_prices,
-        scenario_co2_limit,
-        scenario_co2_tax_mid,
-        scenario_no_dsm,
-        scenario_north_process_caps,
-        scenario_all_together]
+        scenario_stock_prices #, scenario_co2_limit, scenario_co2_tax_mid, scenario_no_dsm, scenario_north_process_caps, scenario_all_together     
+		]
+		
 
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,
@@ -215,3 +220,5 @@ if __name__ == '__main__':
                             plot_periods=plot_periods,
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
+
+	
