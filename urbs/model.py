@@ -3,7 +3,7 @@ import pyomo.core as pyomo
 from datetime import datetime
 from .modelhelper import *
 from .input import *
-
+import pdb    # Hier muss ich den Aufbau des Pyomo Modells verstehen-->Breakpoints
 
 def create_model(data, dt=1, timesteps=None, dual=False):
     """Create a pyomo ConcreteModel urbs object from given input data.
@@ -26,7 +26,8 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
-
+    pdb.set_trace()
+	
     # Parameters
 
     # weight = length of year (hours) / length of simulation (hours)

@@ -25,6 +25,13 @@ def scenario_stock_prices(data):
     co.loc[stock_commodities_only, 'price'] *= 1.5
     return data
 
+def alternative_scenario_stock_prices(prob):
+    # change stock commodity prices
+    co = data['commodity']
+    stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
+    co.loc[stock_commodities_only, 'price'] *= 1.5
+    return prob
+
 
 def scenario_co2_limit(data):
     # change global CO2 limit
@@ -123,6 +130,7 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = scenario(data)
+	#Idee: prob=alternative_scenario(prob)
     urbs.validate_input(data)
 
     # create model
