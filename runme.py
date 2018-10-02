@@ -116,9 +116,9 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
         the urbs model instance
     """
 #Meine Ideen: 
-	#Lese Daten nur zu Beginn des Programms ein
-	#Kopiere die Blaupause des Standard Szenarios und modifiziere die variablen Parameter, um das entsprechende Modell für das Szenario zu erstellen
-	
+    #Lese Daten nur zu Beginn des Programms ein
+    #Kopiere die Blaupause des Standard Szenarios und modifiziere die variablen Parameter, um das entsprechende Modell für das Szenario zu erstellen. Dies soll in der Funktion define Szenario passieren.
+    
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = urbs.read_excel(input_file)
@@ -161,7 +161,9 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
 
 
 if __name__ == '__main__':
-
+    start_time=time.time()
+    start_time_proc=time.process_time()
+    
     input_file = 'mimo-example.xlsx'
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
     result_dir = prepare_result_directory(result_name)  # name + time stamp
@@ -176,6 +178,7 @@ if __name__ == '__main__':
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
+    
     # plotting commodities/sites
     plot_tuples = [
         ('North', 'Elec'),
@@ -210,19 +213,36 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        scenario_stock_prices #, scenario_co2_limit, scenario_co2_tax_mid, scenario_no_dsm, scenario_north_process_caps, scenario_all_together     
+        scenario_stock_prices
+        #, scenario_co2_limit, scenario_co2_tax_mid, scenario_no_dsm, scenario_north_process_caps, scenario_all_together     
         ]
-		
+        
     
     
     for scenario in scenarios:
-        t1=time.clock()
+        t1=time.process_time()
+        szenario_start_time=time.time()
         prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
-        t2=time.clock()
-        print ("\nRechenzeit: "+str(t2-t1)+"s\n")
-	
+        t2=time.process_time()
+        current_time=time.time()
+        print (
+            "\nZeit seit Start: " +str(current_time-start_time) +
+            "\nRechenzeit seit Start: "+str(t2-start_time_proc)+"s" +
+            "\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s"
+            "\nRechenzeit für Szenario: "+str(t2-t1)+"s\n")
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
