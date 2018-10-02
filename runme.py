@@ -95,13 +95,14 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
-def run_scenario(input_file, timesteps, scenario, result_dir, dt,
+def run_scenario(data, timesteps, scenario, result_dir, dt,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
                  report_tuples=None, report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
 
     Args:
-        input_file: filename to an Excel spreadsheet for urbs.read_excel
+        data: content of the excel sheet
+        input_file: filename to an Excel spreadsheet for urbs.read_excel             #geändert zu data
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
         result_dir: directory name for result spreadsheet and plots
@@ -121,7 +122,6 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data = urbs.read_excel(input_file)
     data = scenario(data)
     urbs.validate_input(data)
 
@@ -217,12 +217,11 @@ if __name__ == '__main__':
         #, scenario_co2_limit, scenario_co2_tax_mid, scenario_no_dsm, scenario_north_process_caps, scenario_all_together     
         ]
         
-    
-    
+    data = urbs.read_excel(input_file)
     for scenario in scenarios:
         t1=time.process_time()
         szenario_start_time=time.time()
-        prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,
+        prob = run_scenario(data, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,
@@ -231,10 +230,11 @@ if __name__ == '__main__':
         t2=time.process_time()
         current_time=time.time()
         print (
-            "\nZeit seit Start: " +str(current_time-start_time) +
+            "\nZeit seit Start: " +str(current_time-start_time) +"s" +
             "\nRechenzeit seit Start: "+str(t2-start_time_proc)+"s" +
             "\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s"
             "\nRechenzeit für Szenario: "+str(t2-t1)+"s\n")
+
 
     
     
