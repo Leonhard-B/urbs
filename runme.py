@@ -7,7 +7,7 @@ from datetime import datetime
 from pyomo.opt.base import SolverFactory
 
 #Für später:
-#import time
+import time
 #start_time = time.time()
 #print("--- %s seconds ---" % (time.time() - start_time))
 
@@ -161,6 +161,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
 
 
 if __name__ == '__main__':
+
     input_file = 'mimo-example.xlsx'
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
     result_dir = prepare_result_directory(result_name)  # name + time stamp
@@ -210,15 +211,18 @@ if __name__ == '__main__':
     scenarios = [
         scenario_base,
         scenario_stock_prices #, scenario_co2_limit, scenario_co2_tax_mid, scenario_no_dsm, scenario_north_process_caps, scenario_all_together     
-		]
+        ]
 		
-
+    
+    
     for scenario in scenarios:
+        t1=time.clock()
         prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
-
+        t2=time.clock()
+        print ("\nRechenzeit: "+str(t2-t1)+"s\n")
 	
