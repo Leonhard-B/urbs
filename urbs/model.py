@@ -26,7 +26,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
-    pdb.set_trace()
+
 	
     # Parameters
 

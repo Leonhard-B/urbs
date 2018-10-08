@@ -6,10 +6,11 @@ import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
 
-#Für später:
+#Memory usage
+import os
+import psutil
+
 import time
-#start_time = time.time()
-#print("--- %s seconds ---" % (time.time() - start_time))
 
 
 # SCENARIOS
@@ -169,6 +170,9 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
 
 
 if __name__ == '__main__':
+
+    process = psutil.Process(os.getpid())
+    print("Aktuelle Speicherbelegung: " +str(process.memory_info().rss))
     start_time=time.time()
     start_time_proc=time.process_time()
     
@@ -240,8 +244,9 @@ if __name__ == '__main__':
         print (
             "\nZeit seit Start: " +str(current_time-start_time) +"s" +
             "\nRechenzeit seit Start: "+str(t2-start_time_proc)+"s" +
-            "\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s"
-            "\nRechenzeit für Szenario: "+str(t2-t1)+"s\n")
+            "\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s"+
+            "\nRechenzeit für Szenario: "+str(t2-t1)+"s\n"+
+			"\nAktuelle Speicherbelegung: " + str(process.memory_info().rss))
 
 
     
