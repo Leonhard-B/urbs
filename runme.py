@@ -170,9 +170,8 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
 
 
 if __name__ == '__main__':
-
     process = psutil.Process(os.getpid())
-    print("Aktuelle Speicherbelegung: " +str(process.memory_info().rss))
+    print("Aktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
     start_time=time.time()
     start_time_proc=time.process_time()
     
@@ -245,8 +244,8 @@ if __name__ == '__main__':
             "\nZeit seit Start: " +str(current_time-start_time) +"s" +
             "\nRechenzeit seit Start: "+str(t2-start_time_proc)+"s" +
             "\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s"+
-            "\nRechenzeit für Szenario: "+str(t2-t1)+"s\n"+
-			"\nAktuelle Speicherbelegung: " + str(process.memory_info().rss))
+            "\nRechenzeit für Szenario: "+str(t2-t1)+"s"+
+			"\nAktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
 
 
     
