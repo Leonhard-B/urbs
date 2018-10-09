@@ -6,10 +6,13 @@ import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
 
+#Breakpoints
+import pdb   
+
 #Memory usage
-import os
 import psutil
 
+#Time measurment
 import time
 
 
@@ -23,14 +26,18 @@ def scenario_stock_prices(data):
     # change stock commodity prices
     co = data['commodity']
     stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
-    co.loc[stock_commodities_only, 'price'] *= 1.5
+    co.loc[stock_commodities_only, 'price'] *= 100
     return data
 
+	#alternative Szenarien müssen zur Erkennung "alternative" im Namen enthalten
 def alternative_scenario_stock_prices(prob):
     # change stock commodity prices
-    co = data['commodity']
-    stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
-    co.loc[stock_commodities_only, 'price'] *= 1.5
+    co = prob.commodity
+    stock_commodities_only = (prob.commodity.index.get_level_values('Type') == 'Stock')
+    prob.commodity.loc[stock_commodities_only, 'price'] *= 100
+    prob.commodity_dict=prob.commodity.to_dict()
+    #prob.sit=...prob.commodity.index.get_level_values('Commodity' | 'Type' | 'Site').unique()      bleibt gleich & muss nicht geändert werden
+    #prob.commodity.index    prob.dsm_down_tuples                                bleibt (hoffentlich) alles gleich & muss nicht geändert werden
     return prob
 
 
@@ -103,6 +110,48 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
+def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
+                 plot_tuples=None,  plot_sites_name=None, plot_periods=None,
+                 report_tuples=None, report_sites_name=None):
+ 
+    # scenario name, read and modify data for scenario
+    sce = scenario.__name__
+    prob=scenario(prob)
+    #urbs.validate_input(data)
+
+    
+    # refresh time stamp string and create filename for logfile
+    now = prob.created
+    log_filename = os.path.join(result_dir, '{}.log').format(sce)
+
+    # solve model and read results
+    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = setup_solver(optim, logfile=log_filename)
+    result = optim.solve(prob, tee=True)
+
+    # save problem solution (and input data) to HDF5 file
+    urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+
+    # write report to spreadsheet
+    urbs.report(
+        prob,
+        os.path.join(result_dir, '{}.xlsx').format(sce),
+        report_tuples=report_tuples,
+        report_sites_name=report_sites_name)
+
+    # result plots
+    urbs.result_figures(
+        prob,
+        os.path.join(result_dir, '{}'.format(sce)),
+        timesteps,
+        plot_title_prefix=sce.replace('_', ' '),
+        plot_tuples=plot_tuples,
+        plot_sites_name=plot_sites_name,
+        periods=plot_periods,
+        figure_size=(24, 9))
+    return prob
+    
+    
 def run_scenario(data, timesteps, scenario, result_dir, dt,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
                  report_tuples=None, report_sites_name=None):
@@ -131,12 +180,12 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = scenario(data)
-	#Idee: prob=alternative_scenario(prob)
     urbs.validate_input(data)
 
     # create model
     prob = urbs.create_model(data, dt, timesteps)
-
+    #pdb.set_trace()
+    
     # refresh time stamp string and create filename for logfile
     now = prob.created
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
@@ -224,7 +273,8 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        scenario_stock_prices
+        scenario_stock_prices,
+        alternative_scenario_stock_prices
         #, scenario_co2_limit, scenario_co2_tax_mid, scenario_no_dsm, scenario_north_process_caps, scenario_all_together     
         ]
         
@@ -232,12 +282,23 @@ if __name__ == '__main__':
     for scenario in scenarios:
         t1=time.process_time()
         szenario_start_time=time.time()
-        prob = run_scenario(data, timesteps, scenario, result_dir, dt,
+        
+        if str(scenario.__name__).find("alternative")>=0:
+                            print ("Alternative")
+                            run_alternative_scenario (prob, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
+        else:
+             prob = run_scenario(data, timesteps, scenario, result_dir, dt,
+                            plot_tuples=plot_tuples,
+                            plot_sites_name=plot_sites_name,
+                            plot_periods=plot_periods,
+                            report_tuples=report_tuples,
+                            report_sites_name=report_sites_name)
+        
         t2=time.process_time()
         current_time=time.time()
         print (
@@ -245,7 +306,7 @@ if __name__ == '__main__':
             "\nRechenzeit seit Start: "+str(t2-start_time_proc)+"s" +
             "\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s"+
             "\nRechenzeit für Szenario: "+str(t2-t1)+"s"+
-			"\nAktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
+            "\nAktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
 
 
     
