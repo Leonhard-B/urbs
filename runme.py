@@ -15,6 +15,10 @@ import psutil
 #Time measurment
 import time
 
+#for proper copying of data
+from copy import deepcopy
+
+
 
 # SCENARIOS
 def scenario_base(data):
@@ -28,18 +32,6 @@ def scenario_stock_prices(data):
     stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
     co.loc[stock_commodities_only, 'price'] *= 100
     return data
-
-    #alternative Szenarien müssen zur Erkennung "alternative" im Namen enthalten
-    #Prob muss/soll bei der Übergabe das Standard Basismodell enthalten
-def alternative_scenario_stock_prices(prob):
-    # change stock commodity prices
-    co = prob.commodity
-    stock_commodities_only = (prob.commodity.index.get_level_values('Type') == 'Stock')
-    prob.commodity.loc[stock_commodities_only, 'price'] *= 100
-    prob.commodity_dict=prob.commodity.to_dict()
-    #prob.sit=...prob.commodity.index.get_level_values('Commodity' | 'Type' | 'Site').unique()      bleibt gleich & muss nicht geändert werden
-    #prob.commodity.index    prob.dsm_down_tuples                                bleibt (hoffentlich) alles gleich & muss nicht geändert werden
-    return prob
 
 
 def scenario_co2_limit(data):
@@ -117,16 +109,17 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
  
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    prob=scenario(prob)
+    prob=urbs.alternative_scenario_stock_prices(prob)
     #urbs.validate_input(data)
-
-    #Write model to lp File
-    #prob.write('model.lp', io_options={"symbolic_solver_labels":True})
     
     # refresh time stamp string and create filename for logfile
     now = prob.created
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
+    #Write model to lp File
+    model_filename = os.path.join('{}.lp').format(sce)
+    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
+    
     # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
@@ -178,22 +171,27 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     """
 #Meine Ideen: 
     #Lese Daten nur zu Beginn des Programms ein
-    #Kopiere die Blaupause des Standard Szenarios und modifiziere die variablen Parameter, um das entsprechende Modell für das Szenario zu erstellen. Dies soll in der Funktion define Szenario passieren.
+    #Kopiere die Blaupause des Standard Szenarios und modifiziere die variablen Parameter, 
+    #um das entsprechende Modell für das Szenario zu erstellen. Dies soll in der Funktion define Szenario passieren.
     
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data2 = scenario(data)
+    #klone Objekt, um Daten nicht erneut auslesen zu müssen
+    data2=deepcopy(data)
+    data2 = scenario(data2)
     urbs.validate_input(data2)
-
+       
     # create model
     prob = urbs.create_model(data2, dt, timesteps)
+    
     #Write model to lp File
-    #prob.write('model.lp', io_options={"symbolic_solver_labels":True})
+    model_filename = os.path.join('{}.lp').format(sce)
+    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
     
     # refresh time stamp string and create filename for logfile
     now = prob.created
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
-
+    
     # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
@@ -238,7 +236,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (3500, 168)  # time step selection
+    (offset, length) = (3500, 3)  # time step selection
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -277,11 +275,12 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        #scenario_stock_prices,
-        #alternative_scenario_stock_prices
+        scenario_stock_prices,
+        urbs.alternative_scenario_stock_prices
         #, scenario_co2_limit, scenario_co2_tax_mid, scenario_no_dsm, scenario_north_process_caps, scenario_all_together     
         ]
-        
+    
+    #load Data from Excel sheet
     data = urbs.read_excel(input_file)
 
     
@@ -289,6 +288,7 @@ if __name__ == '__main__':
         t1=time.process_time()
         szenario_start_time=time.time()
         
+        #Falls es ein alternatives Szenario ist, soll run_alternative_scenario aufgerufen werden und das prob_base verwendet werden
         if str(scenario.__name__).find("alternative")>=0:
             prob = run_alternative_scenario (prob_base, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
@@ -315,33 +315,8 @@ if __name__ == '__main__':
         
         #Die alternativen Szenarien benötigen das Basis Modell
         if scenario.__name__ == "scenario_base":
-            prob_base=prob
-    
-    
-    print("\nZeit für 10 alternative Szenarien:")
-    t1=time.process_time()
-    for i in range(1,11):
-        t2=time.time()
-        for j in range (1,11):
-            prob=alternative_scenario_stock_prices(prob_base)
-        print ((time.process_time()-t2))
-    print ("Gesamtzeit (10*10 alternative Sz.):")
-    print(time.process_time()-t1)
-    
-    print("\nZeit für 10 normale Szenarien:")
-    t1=time.process_time()
-    for i in range(1,11):
-        t2=time.process_time()
-        for j in range (1,11):
-            data2=scenario_stock_prices(data)
-            prob = urbs.create_model(data2, dt, timesteps)
-        print ((time.process_time()-t2))
-    print ("Gesamtzeit (10*10 normale Sz.):")
-    print(time.process_time()-t1)
-    
-    
-    
-    
-    
-    
+            prob_base=prob.clone()
+
+  
+
     

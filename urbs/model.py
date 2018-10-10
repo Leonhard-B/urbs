@@ -3,6 +3,10 @@ import pyomo.core as pyomo
 from datetime import datetime
 from .modelhelper import *
 from .input import *
+import pdb
+
+
+
 
 
 def create_model(data, dt=1, timesteps=None, dual=False):
@@ -78,7 +82,8 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.sit = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Site').unique(),
         doc='Set of sites')
-
+    
+#    pdb.set_trace()
     # commodity (e.g. solar, wind, coal...)
     m.com = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Commodity').unique(),
@@ -252,7 +257,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         m.cost_type,
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
-
+ #   pdb.set_trace()
     # commodity
     m.e_co_stock = pyomo.Var(
         m.tm, m.com_tuples,
