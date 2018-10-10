@@ -236,7 +236,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (3500, 3)  # time step selection
+    (offset, length) = (3500, 168)  # time step selection
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -275,8 +275,8 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        scenario_stock_prices,
-        urbs.alternative_scenario_stock_prices
+        #scenario_stock_prices,
+        #urbs.alternative_scenario_stock_prices
         #, scenario_co2_limit, scenario_co2_tax_mid, scenario_no_dsm, scenario_north_process_caps, scenario_all_together     
         ]
     
@@ -318,5 +318,31 @@ if __name__ == '__main__':
             prob_base=prob.clone()
 
   
-
     
+    
+    print("\nZeit für jeweils 10 alternative Szenarien:")
+    t1=time.process_time()
+    for i in range(1,11):
+        t2=time.process_time()
+        for j in range (1,11):
+            prob=urbs.alternative_scenario_stock_prices(prob_base)
+        print ((time.process_time()-t2))
+    print ("Gesamtzeit (10*10 alternative Sz.):")
+    print(time.process_time()-t1)
+    
+    print("\nZeit für jeweils 10 normale Szenarien:")
+    t1=time.process_time()
+    for i in range(1,11):
+        t2=time.process_time()
+        for j in range (1,2):
+            data2=scenario_stock_prices(data)
+            prob = urbs.create_model(data2, dt, timesteps)
+        print ((time.process_time()-t2))
+    print ("Gesamtzeit (10*10 normale Sz.):")
+    print(time.process_time()-t1)
+    
+    
+    
+    
+    
+
