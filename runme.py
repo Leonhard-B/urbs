@@ -14,7 +14,6 @@ import psutil
 
 #Time measurment
 import time
-import timeit
 
 
 # SCENARIOS
@@ -318,23 +317,27 @@ if __name__ == '__main__':
         if scenario.__name__ == "scenario_base":
             prob_base=prob
     
-    pdb.set_trace()
-    timeit.Timer("run_alternative_scenario").timeit(1000)
     
-    t1=time.process_time()
-    for i in range(1,10):
-        t2=time.process_time()
-        prob=alternative_scenario_stock_prices(prob_base)
-        print (time.process_time()-t2)
-    print(time.process_time()-t1)
+    print("\nZeit für 10 alternative Szenarien:")
+    t1=time.time()
+    for i in range(1,11):
+        t2=time.time()
+        for j in range (1,101):
+            prob=alternative_scenario_stock_prices(prob_base)
+        print ((time.time()-t2))
+    print ("Gesamtzeit (10*10 alternative Sz.):")
+    print(time.time()-t1)
     
-    t1=time.process_time()
-    for i in range(1,10):
-        t2=time.process_time()
-        data2=scenario_stock_prices(data)
-        prob = urbs.create_model(data2, dt, timesteps)
-        print (time.process_time()-t2)
-    print(time.process_time()-t1)
+    print("\nZeit für 10 normale Szenarien:")
+    t1=time.time()
+    for i in range(1,101):
+        t2=time.time()
+        for j in range (1,11):
+            data2=scenario_stock_prices(data)
+            prob = urbs.create_model(data2, dt, timesteps)
+        print ((time.time()-t2))
+    print ("Gesamtzeit (10*10 normale Sz.):")
+    print(time.time()-t1)
     
     
     
