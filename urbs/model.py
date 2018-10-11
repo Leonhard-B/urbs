@@ -30,7 +30,6 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
-
 	
     # Parameters
 
@@ -119,7 +118,8 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     # tuple sets
     m.com_tuples = pyomo.Set(
         within=m.sit*m.com*m.com_type,
-        initialize=m.commodity.index,
+        #initialize=m.commodity.index,
+        initialize=m.commodity_dict["price"].keys(),
         doc='Combinations of defined commodities, e.g. (Mid,Elec,Demand)')
     m.pro_tuples = pyomo.Set(
         within=m.sit*m.pro,
@@ -577,6 +577,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
 
     if dual:
         m.dual = pyomo.Suffix(direction=pyomo.Suffix.IMPORT)
+    pdb.set_trace()
     return m
 
 
