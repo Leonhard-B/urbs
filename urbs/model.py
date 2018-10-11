@@ -82,7 +82,6 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         initialize=m.commodity.index.get_level_values('Site').unique(),
         doc='Set of sites')
     
-#    pdb.set_trace()
     # commodity (e.g. solar, wind, coal...)
     m.com = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Commodity').unique(),
@@ -119,7 +118,8 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.com_tuples = pyomo.Set(
         within=m.sit*m.com*m.com_type,
         #initialize=m.commodity.index,
-        initialize=m.commodity_dict["price"].keys(),
+        # Casting to list is necessary to avoid error messages when cloning model if pyomo is version 5.2 or lower (fixed since 5.3):
+        initialize=list(m.commodity_dict["price"].keys()), 
         doc='Combinations of defined commodities, e.g. (Mid,Elec,Demand)')
     m.pro_tuples = pyomo.Set(
         within=m.sit*m.pro,
@@ -257,7 +257,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         m.cost_type,
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
- #   pdb.set_trace()
+
     # commodity
     m.e_co_stock = pyomo.Var(
         m.tm, m.com_tuples,
@@ -577,7 +577,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
 
     if dual:
         m.dual = pyomo.Suffix(direction=pyomo.Suffix.IMPORT)
-    pdb.set_trace()
+
     return m
 
 
