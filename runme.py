@@ -185,7 +185,7 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     prob = urbs.create_model(data2, dt, timesteps)
     
     #Write model to lp File
-    model_filename = os.path.join('{}.lp').format(sce)
+    model_filename = os.path.join(result_dir, '{}.lp').format(sce)
     prob.write(model_filename, io_options={"symbolic_solver_labels":True})
     
     # refresh time stamp string and create filename for logfile
@@ -320,25 +320,25 @@ if __name__ == '__main__':
   
     
     
-    print("\nZeit für jeweils 10 alternative Szenarien:")
+    print("\nZeit für alternative Szenarien:")
     t1=time.process_time()
     for i in range(1,11):
         t2=time.process_time()
         for j in range (1,101):
             prob=urbs.alternative_scenario_stock_prices(prob_base)
         print ((time.process_time()-t2))
-    print ("Gesamtzeit (10*10 alternative Sz.):")
+    print ("Gesamtzeit ("+str(i)+ "*" +str(j)+" alternative Sz.):")
     print(time.process_time()-t1)
     
-    print("\nZeit für jeweils 10 normale Szenarien:")
+    print("\nZeit für normale Szenarien:")
     t1=time.process_time()
     for i in range(1,11):
         t2=time.process_time()
-        for j in range (1,2):
+        for j in range (1,11):
             data2=scenario_stock_prices(data)
             prob = urbs.create_model(data2, dt, timesteps)
         print ((time.process_time()-t2))
-    print ("Gesamtzeit (10*10 normale Sz.):")
+    print ("Gesamtzeit ("+str(i)+ "*" +str(j)+" normale Sz.):")
     print(time.process_time()-t1)
     
     
