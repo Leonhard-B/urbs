@@ -18,7 +18,8 @@ import time
 #for proper copying of data
 from copy import deepcopy
 
-
+#Interrupt
+import interrupt_timer as rupt
 
 # SCENARIOS
 def scenario_base(data):
@@ -169,10 +170,6 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     Returns:
         the urbs model instance
     """
-#Meine Ideen: 
-    #Lese Daten nur zu Beginn des Programms ein
-    #Kopiere die Blaupause des Standard Szenarios und modifiziere die variablen Parameter, 
-    #um das entsprechende Modell für das Szenario zu erstellen. Dies soll in der Funktion define Szenario passieren.
     
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
@@ -222,9 +219,13 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
 
 if __name__ == '__main__':
     process = psutil.Process(os.getpid())
+    mylist=list()
+    interval = rupt.setInterval(rupt.myfunc, 1, process, mylist)
     print("Aktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
     start_time=time.time()
     start_time_proc=time.process_time()
+    Speicherbelegung=list()
+    Speicherbelegung.append(process.memory_info().rss/1000000)
     
     input_file = 'mimo-example.xlsx'
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
@@ -275,9 +276,9 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        scenario_stock_prices,
-        urbs.alternative_scenario_stock_prices
-        #, scenario_co2_limit, scenario_co2_tax_mid, scenario_no_dsm, scenario_north_process_caps, scenario_all_together     
+        scenario_stock_prices
+        #urbs.alternative_scenario_stock_prices,
+        #scenario_co2_limit, scenario_co2_tax_mid, scenario_no_dsm, scenario_north_process_caps, scenario_all_together     
         ]
     
     #load Data from Excel sheet
@@ -285,6 +286,8 @@ if __name__ == '__main__':
 
     
     for scenario in scenarios:
+        Speicherbelegung.append(process.memory_info().rss/1000000)
+        print("Aktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
         t1=time.process_time()
         szenario_start_time=time.time()
         
@@ -317,4 +320,8 @@ if __name__ == '__main__':
         if scenario.__name__ == "scenario_base":
             prob_base=prob.clone()
 
-  
+    Speicherbelegung.append(process.memory_info().rss/1000000)
+    print (Speicherbelegung)
+    interval.cancel() 
+    for x in range(len(mylist)):
+        print (mylist[x])
