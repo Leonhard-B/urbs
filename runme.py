@@ -5,6 +5,7 @@ import shutil
 import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
+#delete m._data (some functions need to be altered), remove prob @prob=run_scenario() and result @result=optim.solve()
 
 #Breakpoints
 import pdb   
@@ -110,7 +111,7 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
  
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    prob=urbs.alternative_scenario_stock_prices(prob)
+    prob=scenario(prob, 0)
     #urbs.validate_input(data)
     
     # refresh time stamp string and create filename for logfile
@@ -124,7 +125,7 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=True)
+    result = optim.solve(prob, tee=False)
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
@@ -146,6 +147,7 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
+    prob==scenario(prob, 1)
     return prob
     
     
@@ -192,7 +194,7 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=True)
+    result = optim.solve(prob, tee=False)
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
@@ -220,7 +222,7 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
 if __name__ == '__main__':
     process = psutil.Process(os.getpid())
     mylist=list()
-    interval = rupt.setInterval(rupt.myfunc, 1, process, mylist)
+    #interval = rupt.setInterval(rupt.myfunc, 1, process, mylist)
     print("Aktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
     start_time=time.time()
     start_time_proc=time.process_time()
@@ -275,10 +277,19 @@ if __name__ == '__main__':
 
     # select scenarios to be run
     scenarios = [
-        scenario_base,
-        scenario_stock_prices
-        #urbs.alternative_scenario_stock_prices,
-        #scenario_co2_limit, scenario_co2_tax_mid, scenario_no_dsm, scenario_north_process_caps, scenario_all_together     
+        scenario_base
+        ,scenario_stock_prices
+        ,urbs.alternative_scenario_stock_prices
+        #,scenario_co2_limit
+        #,urbs.alternative_scenario_co2_limit
+        #,scenario_co2_tax_mid
+        #,urbs.alternative_scenario_co2_tax_mid
+        #,scenario_no_dsm
+        #,urbs.alternative_scenario_no_dsm
+        #,scenario_north_process_caps
+        #,urbs.alternative_scenario_north_process_caps
+        #,scenario_all_together
+        #,urbs.alternative_scenario_all_together
         ]
     
     #load Data from Excel sheet
@@ -287,13 +298,13 @@ if __name__ == '__main__':
     
     for scenario in scenarios:
         Speicherbelegung.append(process.memory_info().rss/1000000)
-        print("Aktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
         t1=time.process_time()
         szenario_start_time=time.time()
         
         #Falls es ein alternatives Szenario ist, soll run_alternative_scenario aufgerufen werden und das prob_base verwendet werden
         if str(scenario.__name__).find("alternative")>=0:
-            prob = run_alternative_scenario (prob_base, timesteps, scenario, result_dir, dt,
+            #prob=prob_base.clone()
+            prob = run_alternative_scenario (prob, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,
@@ -316,12 +327,14 @@ if __name__ == '__main__':
             "\nRechenzeit für Szenario: "+str(t2-t1)+"s"+
             "\nAktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
         
-        #Die alternativen Szenarien benötigen das Basis Modell
-        if scenario.__name__ == "scenario_base":
-            prob_base=prob.clone()
-
+        #Die alternativen Szenarien benötigen das Basis Modell      #Bei neuen alt. Szenarien nicht mehr notwendig: Klonen wird vermieden!
+        #if scenario.__name__ == "scenario_base":
+        #    prob_base=prob.clone()
+    sce = scenario.__name__
+    model_filename = os.path.join(result_dir, '{}.lp').format(sce)
+    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
     Speicherbelegung.append(process.memory_info().rss/1000000)
     print (Speicherbelegung)
-    interval.cancel() 
-    for x in range(len(mylist)):
-        print (mylist[x])
+#    interval.cancel() 
+#    for x in range(len(mylist)):
+#        print (mylist[x])

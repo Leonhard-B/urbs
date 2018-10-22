@@ -21,4 +21,4 @@ from .report import report
 from .saveload import load, save
 
 
-from .scenario import alternative_scenario_stock_prices
+from .scenario import *
