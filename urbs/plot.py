@@ -9,7 +9,6 @@ from .output import get_constants, get_timeseries
 from .pyomoio import get_entity
 from .util import is_string
 
-
 def sort_plot_elements(elements):
     """Sort timeseries for plotting
 
@@ -164,7 +163,7 @@ def plot(prob, com, sit, dt, timesteps, timesteps_plot,
 
     # stack plot for consumed commodities (divided by dt for power)
     sp00 = ax0.stackplot(hoursteps[1:],
-                         -consumed.as_matrix().T/dt[0],
+                         -consumed.values.T/dt[0],
                          labels=tuple(consumed.columns),
                          linewidth=0.15)
     # color
@@ -178,7 +177,7 @@ def plot(prob, com, sit, dt, timesteps, timesteps_plot,
 
     # stack plot for created commodities (divided by dt for power)
     sp0 = ax0.stackplot(hoursteps[1:],
-                        created.as_matrix().T/dt[0],
+                        created.values.T/dt[0],
                         labels=tuple(created.columns),
                         linewidth=0.15)
 

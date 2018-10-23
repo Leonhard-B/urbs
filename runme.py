@@ -6,6 +6,7 @@ import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
 #delete m._data (some functions need to be altered), remove prob @prob=run_scenario() and result @result=optim.solve()
+#in plot.py: import erst in Funktion??
 
 #Breakpoints
 import pdb   
@@ -148,6 +149,8 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
         periods=plot_periods,
         figure_size=(24, 9))
     prob==scenario(prob, 1)
+    model_filename = os.path.join(result_dir, 'rebuilt_base.lp')
+    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
     return prob
     
     
@@ -331,9 +334,6 @@ if __name__ == '__main__':
         #Die alternativen Szenarien benötigen das Basis Modell      #Bei neuen alt. Szenarien nicht mehr notwendig: Klonen wird vermieden!
         #if scenario.__name__ == "scenario_base":
         #    prob_base=prob.clone()
-    sce = scenario.__name__
-    model_filename = os.path.join(result_dir, '{rebuilt_base}.lp').format(sce)
-    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
     Speicherbelegung.append(process.memory_info().rss/1000000)
     print (Speicherbelegung)
 #    interval.cancel() 

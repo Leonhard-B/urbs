@@ -138,7 +138,6 @@ def alternative_scenario_no_dsm(prob, reverse):
         return prob
     
     if reverse:
-        #pdb.set_trace()
         #insert all the constraints!
         prob.dsm_dict=prob._data["dsm"].to_dict()
         try:
@@ -147,6 +146,7 @@ def alternative_scenario_no_dsm(prob, reverse):
             raise NotImplementedError("Could not rebuild base modell!")
         
         prob.del_component(prob.dsm_site_tuples_domain)
+        prob.del_component(prob.dsm_site_tuples)
         prob.dsm_site_tuples = pyomo.Set(
             within=prob.sit*prob.com,
             initialize=myset,
@@ -155,6 +155,7 @@ def alternative_scenario_no_dsm(prob, reverse):
         prob.del_component(prob.dsm_down_tuples_domain)
         prob.del_component(prob.dsm_down_tuples_domain_index_0)           
         prob.del_component(prob.dsm_down_tuples_domain_index_0_index_0)
+        prob.del_component(prob.dsm_down_tuples)
         prob.dsm_down_tuples = pyomo.Set(
             within=prob.tm*prob.tm*prob.sit*prob.com,
             initialize=[(t, tt, site, commodity)
@@ -177,6 +178,7 @@ def alternative_scenario_no_dsm(prob, reverse):
             doc='DSM downshift')
         
         prob.del_component(prob.def_dsm_variables_index)
+        prob.del_component(prob.def_dsm_variables)
         prob.def_dsm_variables = pyomo.Constraint(
             prob.tm, prob.dsm_site_tuples,
             rule=def_dsm_variables_rule,
@@ -188,26 +190,28 @@ def alternative_scenario_no_dsm(prob, reverse):
             prob.tm, prob.dsm_site_tuples,
             rule=res_dsm_upward_rule,
             doc='DSMup <= Cup (threshold capacity of DSMup)')
-
+        
+        pdb.set_trace()
         prob.del_component(prob.res_dsm_downward_index)
         prob.del_component(prob.res_dsm_downward)
-        pdb.set_trace()
         prob.res_dsm_downward = pyomo.Constraint(
             prob.tm, prob.dsm_site_tuples,
             rule=res_dsm_downward_rule,
             doc='DSMdo (summed) <= Cdo (threshold capacity of DSMdo)')
         
-        #prob.del_component(prob.dsm:site_tuple)
+        prob.del_component(prob.res_dsm_maximum_index)
         prob.res_dsm_maximum = pyomo.Constraint(
             prob.tm, prob.dsm_site_tuples,
             rule=res_dsm_maximum_rule,
             doc='DSMup + DSMdo (summed) <= max(Cup,Cdo)')
         
+        prob.del_component(prob.res_dsm_recovery_index)
         prob.res_dsm_recovery = pyomo.Constraint(
             prob.tm, prob.dsm_site_tuples,
             rule=res_dsm_recovery_rule,
             doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
         
+        prob.del_component(prob.res_vertex_index)
         prob.res_vertex = pyomo.Constraint(
             prob.tm, prob.com_tuples,
             rule=res_vertex_rule,
