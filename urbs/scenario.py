@@ -39,7 +39,7 @@ def alternative_scenario_co2_limit(prob, reverse):
             doc='total co2 commodity output <= Global CO2 limit')
         return prob
     if reverse:
-        prob.global_prop_dict["value"]["CO2 limit"]*=0.05
+        prob.global_prop_dict["value"]["CO2 limit"]*=20
         prob.del_component(prob.res_global_co2_limit)
         prob.res_global_co2_limit = pyomo.Constraint(
             rule=res_global_co2_limit_rule,
@@ -58,7 +58,7 @@ def alternative_scenario_co2_tax_mid(prob, reverse):
             doc='main cost function by cost type')
         return prob
     if reverse:
-        prob.commodity_dict["price"][('Mid', 'CO2', 'Env')]=prob._data["commodity"][('Mid', 'CO2', 'Env')]["price"]
+        prob.commodity_dict["price"][('Mid', 'CO2', 'Env')]=prob._data["commodity"]["price"][('Mid', 'CO2', 'Env')]
         prob.del_component(prob.def_costs)
         prob.def_costs = pyomo.Constraint(
             prob.cost_type,
@@ -101,6 +101,7 @@ def alternative_scenario_north_process_caps(prob, reverse):
 
 def alternative_scenario_no_dsm(prob, reverse):
     if not reverse:
+        #pdb.set_trace()
         # empty the DSM dataframe completely
         prob.dsm_dict=pd.DataFrame().to_dict()
         
@@ -138,6 +139,8 @@ def alternative_scenario_no_dsm(prob, reverse):
         return prob
     
     if reverse:
+        #dsm_variables & vertex rule
+        #pdb.set_trace()
         #insert all the constraints!
         prob.dsm_dict=prob._data["dsm"].to_dict()
         try:
@@ -171,14 +174,15 @@ def alternative_scenario_no_dsm(prob, reverse):
             prob.tm, prob.dsm_site_tuples,
             within=pyomo.NonNegativeReals,
             doc='DSM upshift')
-        
+           
         prob.dsm_down = pyomo.Var(
             prob.dsm_down_tuples,
             within=pyomo.NonNegativeReals,
             doc='DSM downshift')
-        
+
         prob.del_component(prob.def_dsm_variables_index)
         prob.del_component(prob.def_dsm_variables)
+        del prob.def_dsm_variables
         prob.def_dsm_variables = pyomo.Constraint(
             prob.tm, prob.dsm_site_tuples,
             rule=def_dsm_variables_rule,
@@ -186,31 +190,38 @@ def alternative_scenario_no_dsm(prob, reverse):
         
         prob.del_component(prob.res_dsm_upward_index)
         prob.del_component(prob.res_dsm_upward)
+        del prob.res_dsm_upward
         prob.res_dsm_upward = pyomo.Constraint(
             prob.tm, prob.dsm_site_tuples,
             rule=res_dsm_upward_rule,
             doc='DSMup <= Cup (threshold capacity of DSMup)')
         
-        pdb.set_trace()
         prob.del_component(prob.res_dsm_downward_index)
         prob.del_component(prob.res_dsm_downward)
+        del prob.res_dsm_downward
         prob.res_dsm_downward = pyomo.Constraint(
             prob.tm, prob.dsm_site_tuples,
             rule=res_dsm_downward_rule,
             doc='DSMdo (summed) <= Cdo (threshold capacity of DSMdo)')
         
+        prob.del_component(prob.res_dsm_maximum)
         prob.del_component(prob.res_dsm_maximum_index)
+        del prob.res_dsm_maximum
         prob.res_dsm_maximum = pyomo.Constraint(
             prob.tm, prob.dsm_site_tuples,
             rule=res_dsm_maximum_rule,
             doc='DSMup + DSMdo (summed) <= max(Cup,Cdo)')
         
+        prob.del_component(prob.res_dsm_recovery)
         prob.del_component(prob.res_dsm_recovery_index)
+        del prob.res_dsm_recovery
         prob.res_dsm_recovery = pyomo.Constraint(
             prob.tm, prob.dsm_site_tuples,
             rule=res_dsm_recovery_rule,
             doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
         
+
+        prob.del_component(prob.res_vertex)
         prob.del_component(prob.res_vertex_index)
         prob.res_vertex = pyomo.Constraint(
             prob.tm, prob.com_tuples,
@@ -219,7 +230,7 @@ def alternative_scenario_no_dsm(prob, reverse):
         return prob
 
 
-def alternative_scenario_all_together(prob):
+def alternative_scenario_all_together(prob, reverse):
     # combine all other scenarios
     if not reverse:
         prob = alternative_scenario_stock_prices(prob,0)

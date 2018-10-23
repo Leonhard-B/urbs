@@ -149,7 +149,7 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
         periods=plot_periods,
         figure_size=(24, 9))
     prob==scenario(prob, 1)
-    model_filename = os.path.join(result_dir, 'rebuilt_base.lp')
+    model_filename = os.path.join(result_dir, 'rebuilt_base_from_{}.lp').format(sce)
     prob.write(model_filename, io_options={"symbolic_solver_labels":True})
     return prob
     
@@ -222,6 +222,7 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     return prob
 
 
+
 if __name__ == '__main__':
     process = psutil.Process(os.getpid())
     mylist=list()
@@ -279,21 +280,22 @@ if __name__ == '__main__':
         urbs.COLORS[country] = color
 
     # select scenarios to be run
+    #normal scenarios must be last, since the base model would be destroyed
     scenarios = [
         scenario_base
         ,urbs.alternative_scenario_no_dsm
-        #,urbs.alternative_scenario_all_together
-        #,urbs.alternative_scenario_north_process_caps
-        #,urbs.alternative_scenario_stock_prices
-        #,urbs.alternative_scenario_co2_tax_mid
-        #,urbs.alternative_scenario_co2_limit
-        #,scenario_co2_tax_mid
+        ,urbs.alternative_scenario_all_together
+        ,urbs.alternative_scenario_north_process_caps
+        ,urbs.alternative_scenario_stock_prices
+        ,urbs.alternative_scenario_co2_tax_mid
+        ,urbs.alternative_scenario_co2_limit
+        ,scenario_co2_tax_mid
         ,scenario_no_dsm
-        #,scenario_north_process_caps
-        #,scenario_co2_limit
-        #,scenario_co2_tax_mid
-        #,scenario_all_together
-        #,scenario_stock_prices
+        ,scenario_north_process_caps
+        ,scenario_co2_limit
+        ,scenario_co2_tax_mid
+        ,scenario_all_together
+        ,scenario_stock_prices
         ]
     
     #load Data from Excel sheet
@@ -315,7 +317,7 @@ if __name__ == '__main__':
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
         else:
-             prob = run_scenario(data, timesteps, scenario, result_dir, dt,
+             prob=run_scenario(data, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,
@@ -330,10 +332,8 @@ if __name__ == '__main__':
             "\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s"+
             "\nRechenzeit für Szenario: "+str(t2-t1)+"s"+
             "\nAktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
-        
-        #Die alternativen Szenarien benötigen das Basis Modell      #Bei neuen alt. Szenarien nicht mehr notwendig: Klonen wird vermieden!
-        #if scenario.__name__ == "scenario_base":
-        #    prob_base=prob.clone()
+    
+
     Speicherbelegung.append(process.memory_info().rss/1000000)
     print (Speicherbelegung)
 #    interval.cancel() 
