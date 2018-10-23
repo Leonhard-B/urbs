@@ -283,19 +283,19 @@ if __name__ == '__main__':
     #normal scenarios must be last, since the base model would be destroyed
     scenarios = [
         scenario_base
-        ,urbs.alternative_scenario_no_dsm
-        ,urbs.alternative_scenario_all_together
-        ,urbs.alternative_scenario_north_process_caps
-        ,urbs.alternative_scenario_stock_prices
         ,urbs.alternative_scenario_co2_tax_mid
         ,urbs.alternative_scenario_co2_limit
+        ,urbs.alternative_scenario_no_dsm
+        ,urbs.alternative_scenario_north_process_caps
+        ,urbs.alternative_scenario_stock_prices
+        ,urbs.alternative_scenario_all_together
+        
         ,scenario_co2_tax_mid
+        ,scenario_co2_limit
         ,scenario_no_dsm
         ,scenario_north_process_caps
-        ,scenario_co2_limit
-        ,scenario_co2_tax_mid
-        ,scenario_all_together
         ,scenario_stock_prices
+        ,scenario_all_together
         ]
     
     #load Data from Excel sheet
@@ -327,11 +327,12 @@ if __name__ == '__main__':
         t2=time.process_time()
         current_time=time.time()
         print (
-            "\nZeit seit Start: " +str(current_time-start_time) +"s" +
-            "\nRechenzeit seit Start: "+str(t2-start_time_proc)+"s" +
-            "\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s"+
-            "\nRechenzeit für Szenario: "+str(t2-t1)+"s"+
-            "\nAktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
+            #"\nZeit seit Start: " +str(current_time-start_time) +"s" +
+            #"\nRechenzeit seit Start: "+str(t2-start_time_proc)+"s" +
+            #"\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s"+
+            "\nRechenzeit für Szenario: "+str(t2-t1)+"s"
+            #+"\nAktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n"
+            )
     
 
     Speicherbelegung.append(process.memory_info().rss/1000000)
