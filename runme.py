@@ -278,18 +278,19 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base
-        ,scenario_stock_prices
-        ,urbs.alternative_scenario_stock_prices
-        #,scenario_co2_limit
+        ,urbs.alternative_scenario_no_dsm
+        #,urbs.alternative_scenario_all_together
+        #,urbs.alternative_scenario_north_process_caps
+        #,urbs.alternative_scenario_stock_prices
+        #,urbs.alternative_scenario_co2_tax_mid
         #,urbs.alternative_scenario_co2_limit
         #,scenario_co2_tax_mid
-        #,urbs.alternative_scenario_co2_tax_mid
-        #,scenario_no_dsm
-        #,urbs.alternative_scenario_no_dsm
+        ,scenario_no_dsm
         #,scenario_north_process_caps
-        #,urbs.alternative_scenario_north_process_caps
+        #,scenario_co2_limit
+        #,scenario_co2_tax_mid
         #,scenario_all_together
-        #,urbs.alternative_scenario_all_together
+        #,scenario_stock_prices
         ]
     
     #load Data from Excel sheet
@@ -331,7 +332,7 @@ if __name__ == '__main__':
         #if scenario.__name__ == "scenario_base":
         #    prob_base=prob.clone()
     sce = scenario.__name__
-    model_filename = os.path.join(result_dir, '{}.lp').format(sce)
+    model_filename = os.path.join(result_dir, '{rebuilt_base}.lp').format(sce)
     prob.write(model_filename, io_options={"symbolic_solver_labels":True})
     Speicherbelegung.append(process.memory_info().rss/1000000)
     print (Speicherbelegung)
