@@ -1,6 +1,6 @@
 from .model import *
 import pdb
-
+import time
 
 #Added by Leon in order to update constrains for altenrative scenarios
 def alternative_scenario_stock_prices(prob, reverse):
@@ -130,6 +130,7 @@ def alternative_scenario_no_dsm(prob, reverse):
         prob.res_dsm_maximum = pyomo.Constraint.Skip
         prob.res_dsm_recovery = pyomo.Constraint.Skip
         
+        #The following lines cause 99% of work for the formation of this scenario
         prob.del_component(prob.res_vertex)
         prob.del_component(prob.res_vertex_index)   #If the size/the number of constraints change, index also has to be replaced!
         prob.res_vertex = pyomo.Constraint(
@@ -220,7 +221,7 @@ def alternative_scenario_no_dsm(prob, reverse):
             rule=res_dsm_recovery_rule,
             doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
         
-
+        #The following lines cause cause 50% of rebuilding work
         prob.del_component(prob.res_vertex)
         prob.del_component(prob.res_vertex_index)
         prob.res_vertex = pyomo.Constraint(
@@ -242,5 +243,5 @@ def alternative_scenario_all_together(prob, reverse):
         prob = alternative_scenario_co2_limit(prob,1)
         prob = alternative_scenario_north_process_caps(prob,1)
         return prob
-    
-    
+
+

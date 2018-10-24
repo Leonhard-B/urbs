@@ -5,14 +5,15 @@ import shutil
 import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
-#delete m._data (some functions need to be altered), remove prob @prob=run_scenario() and result @result=optim.solve()
+from urbs.modelhelper import *
+#delete prob._data (some functions need to be altered), remove prob @prob=run_scenario() and result @result=optim.solve()
 #in plot.py: import erst in Funktion??
 
 #Breakpoints
 import pdb   
 
 #Memory usage
-import psutil
+#import psutil
 
 #Time measurment
 import time
@@ -124,7 +125,7 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     prob.write(model_filename, io_options={"symbolic_solver_labels":True})
     
     # solve model and read results
-    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=False)
 
@@ -195,7 +196,7 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
     
     # solve model and read results
-    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=False)
 
@@ -224,14 +225,14 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
 
 
 if __name__ == '__main__':
-    process = psutil.Process(os.getpid())
+    #process = psutil.Process(os.getpid())
     mylist=list()
     #interval = rupt.setInterval(rupt.myfunc, 1, process, mylist)
-    print("Aktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
+    #print("Aktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
     start_time=time.time()
     start_time_proc=time.process_time()
-    Speicherbelegung=list()
-    Speicherbelegung.append(process.memory_info().rss/1000000)
+    #Speicherbelegung=list()
+    #Speicherbelegung.append(process.memory_info().rss/1000000)
     
     input_file = 'mimo-example.xlsx'
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
@@ -243,7 +244,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (3500, 3)  # time step selection
+    (offset, length) = (3500, 168)  # time step selection
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -284,18 +285,18 @@ if __name__ == '__main__':
     scenarios = [
         scenario_base
         ,urbs.alternative_scenario_co2_tax_mid
-        ,urbs.alternative_scenario_co2_limit
-        ,urbs.alternative_scenario_no_dsm
-        ,urbs.alternative_scenario_north_process_caps
-        ,urbs.alternative_scenario_stock_prices
-        ,urbs.alternative_scenario_all_together
+        #,urbs.alternative_scenario_co2_limit
+        #,urbs.alternative_scenario_no_dsm
+        #,urbs.alternative_scenario_north_process_caps
+        #,urbs.alternative_scenario_stock_prices
+        #,urbs.alternative_scenario_all_together
         
-        ,scenario_co2_tax_mid
-        ,scenario_co2_limit
-        ,scenario_no_dsm
-        ,scenario_north_process_caps
-        ,scenario_stock_prices
-        ,scenario_all_together
+        #,scenario_co2_tax_mid
+        #,scenario_co2_limit
+        #,scenario_no_dsm
+        #,scenario_north_process_caps
+        #,scenario_stock_prices
+        #,scenario_all_together
         ]
     
     #load Data from Excel sheet
@@ -303,13 +304,12 @@ if __name__ == '__main__':
 
     
     for scenario in scenarios:
-        Speicherbelegung.append(process.memory_info().rss/1000000)
+        #Speicherbelegung.append(process.memory_info().rss/1000000)
         t1=time.process_time()
         szenario_start_time=time.time()
         
         #Falls es ein alternatives Szenario ist, soll run_alternative_scenario aufgerufen werden und das prob_base verwendet werden
         if str(scenario.__name__).find("alternative")>=0:
-            #prob=prob_base.clone()
             prob = run_alternative_scenario (prob, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
@@ -323,20 +323,21 @@ if __name__ == '__main__':
                             plot_periods=plot_periods,
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
-        
+
         t2=time.process_time()
         current_time=time.time()
-        print (
+        #print (
             #"\nZeit seit Start: " +str(current_time-start_time) +"s" +
             #"\nRechenzeit seit Start: "+str(t2-start_time_proc)+"s" +
-            #"\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s"+
-            "\nRechenzeit für Szenario: "+str(t2-t1)+"s"
+            #"\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s\n"+
+            #"Rechenzeit für " + str(i+1) + " Szenarios: "+str(t2-t1)+"s"
             #+"\nAktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n"
-            )
-    
+            #)
+        
 
-    Speicherbelegung.append(process.memory_info().rss/1000000)
-    print (Speicherbelegung)
+        
+    #Speicherbelegung.append(process.memory_info().rss/1000000)
+    #print (Speicherbelegung)
 #    interval.cancel() 
 #    for x in range(len(mylist)):
 #        print (mylist[x])

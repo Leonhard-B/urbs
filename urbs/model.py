@@ -3,6 +3,7 @@ import pyomo.core as pyomo
 from datetime import datetime
 from .modelhelper import *
 from .input import *
+import time
 import pdb
 
 def create_model(data, dt=1, timesteps=None, dual=False):
@@ -26,7 +27,6 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
-
     # Parameters
 
     # weight = length of year (hours) / length of simulation (hours)

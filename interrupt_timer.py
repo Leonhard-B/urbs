@@ -1,7 +1,7 @@
 import threading
 import time
 #Memory usage
-import psutil
+#import psutil
 import os
 
 def setInterval(func, sec, process, mylist):
