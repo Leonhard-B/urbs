@@ -198,8 +198,17 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
+    
+    t1=time.process_time()
     result = optim.solve(prob, tee=False)
-
+    t2=time.process_time()
+    print ("Erstlösen: "+str (t2-t1) + "s\n")
+    
+    t1=time.process_time()
+    result = optim.solve(prob, tee=False)
+    t2=time.process_time()
+    print ("Zweitlösen: "+str (t2-t1) + "s\n")
+    
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
@@ -244,7 +253,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (3500, 3)  # time step selection
+    (offset, length) = (3500, 500)  # time step selection
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -284,16 +293,20 @@ if __name__ == '__main__':
     #normal scenarios must be last, since the base model would be destroyed
     scenarios = [
         scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
         #,urbs.alternative_scenario_co2_tax_mid
         #,urbs.alternative_scenario_co2_limit
-        ,urbs.alternative_scenario_no_dsm
+        #,urbs.alternative_scenario_no_dsm
         #,urbs.alternative_scenario_north_process_caps
         #,urbs.alternative_scenario_stock_prices
         #,urbs.alternative_scenario_all_together
         
         #,scenario_co2_tax_mid
         #,scenario_co2_limit
-        ,scenario_no_dsm
+        #,scenario_no_dsm
         #,scenario_north_process_caps
         #,scenario_stock_prices
         #,scenario_all_together
