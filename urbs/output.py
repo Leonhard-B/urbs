@@ -2,7 +2,7 @@ import pandas as pd
 from .input import get_input
 from .pyomoio import get_entity, get_entities
 from .util import is_string
-
+import pdb
 
 def get_constants(instance):
     """Return summary DataFrames for important variables
@@ -181,7 +181,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
     # DEMAND SIDE MANAGEMENT (load shifting)
     dsmup = get_entity(instance, 'dsm_up')
     dsmdo = get_entity(instance, 'dsm_down')
-
+    
     if dsmup.empty:
         # if no DSM happened, the demand is not modified (delta = 0)
         delta = pd.Series(0, index=timesteps)

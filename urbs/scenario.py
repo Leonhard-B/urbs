@@ -115,8 +115,6 @@ def alternative_scenario_no_dsm(prob, reverse):
         prob.del_component(prob.dsm_up)
         prob.dsm_down = pyomo.Var()
         prob.dsm_up = pyomo.Var()
-        prob.del_component(prob.dsm_down)   #Make sure its really gone
-        prob.del_component(prob.dsm_up)
         
         prob.del_component(prob.def_dsm_variables)
         prob.del_component(prob.res_dsm_upward)
@@ -171,11 +169,13 @@ def alternative_scenario_no_dsm(prob, reverse):
                 '(5001,5003,Mid,Elec)')
         
         prob.del_component(prob.dsm_up_index)
+        prob.del_component(prob.dsm_up) 
         prob.dsm_up = pyomo.Var(
             prob.tm, prob.dsm_site_tuples,
             within=pyomo.NonNegativeReals,
             doc='DSM upshift')
-           
+        
+        prob.del_component(prob.dsm_down)
         prob.dsm_down = pyomo.Var(
             prob.dsm_down_tuples,
             within=pyomo.NonNegativeReals,
@@ -244,4 +244,19 @@ def alternative_scenario_all_together(prob, reverse):
         prob = alternative_scenario_north_process_caps(prob,1)
         return prob
 
+
+        
+#Möglichkeit: Lass Benutzer Scenario im Excel File erstellen, lade dieses, vergleiche die Daten mit prob und update prob, an den geänderten Stellen
+def del_dsm (prob):
+    return prob
+    
+def change_dsm (prob):
+    return prob
+        
+def upd_dsm_constraints (prob):
+    return prob
+        
+def recreate_dsm (prob):
+    return prob
+        
 

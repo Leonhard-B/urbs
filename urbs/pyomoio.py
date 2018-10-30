@@ -14,6 +14,7 @@ def get_entity(instance, name):
         entity name. For constraints, it retrieves the dual values
     """
     # magic: short-circuit if problem contains a result cache
+    # does not work for alternative scenarios
     #if hasattr(instance, '_result') and name in instance._result:
     #    return instance._result[name].copy(deep=True)
 
@@ -74,8 +75,7 @@ def get_entity(instance, name):
                 [(v[0], v[1].value) for v in entity.iteritems()])
         else:
             # assert(entity.dim() == 0)
-            results = pd.DataFrame(
-                [(v[0], v[1].value) for v in entity.iteritems()])
+            results = pd.DataFrame()
             labels = ['None']
 
     # check for duplicate onset names and append one to several "_" to make

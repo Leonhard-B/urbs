@@ -8,6 +8,7 @@ from .input import get_input
 from .output import get_constants, get_timeseries
 from .pyomoio import get_entity
 from .util import is_string
+import pdb
 
 def sort_plot_elements(elements):
     """Sort timeseries for plotting
@@ -99,7 +100,6 @@ def plot(prob, com, sit, dt, timesteps, timesteps_plot,
 
     (created, consumed, stored, imported, exported,
      dsm) = get_timeseries(prob, com, sit, timesteps)
-
     costs, cpro, ctra, csto = get_constants(prob)
 
     # move retrieved/stored storage timeseries to created/consumed and
@@ -123,9 +123,11 @@ def plot(prob, com, sit, dt, timesteps, timesteps_plot,
     try:
         # detect whether DSM could be used in this plot
         # if so, show DSM subplot (even if delta == 0 for the whole time)
-        df_dsm = get_input(prob, 'dsm')
-        plot_dsm = df_dsm.loc[(sit, com),
-                              ['cap-max-do', 'cap-max-up']].sum().sum() > 0
+        df_dsm = get_input(prob, 'dsm_dict')
+        plot_dsm=0
+        for s in sit:
+            plot_dsm += df_dsm["cap-max-do"][s,com] + df_dsm["cap-max-up"][s,com]
+        plot_dsm=plot_dsm>0
     except (KeyError, TypeError):
         plot_dsm = False
 
