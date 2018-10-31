@@ -162,6 +162,11 @@ def del_dsm (prob):
             rule=res_vertex_rule,
             doc='storage + transmission + process + source + buy - sell == demand')
     
+def change_dsm (prob):
+    return prob
+        
+def upd_dsm_constraints (prob):
+    return prob
         
 def recreate_dsm (prob):
     #dsm_variables & vertex rule

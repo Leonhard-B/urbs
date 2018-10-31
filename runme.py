@@ -77,7 +77,7 @@ def scenario_all_together(data):
 def prepare_result_directory(result_name):
     """ create a time stamped directory within the result folder """
     # timestamp for result directory
-    now = datetime.now().strftime('%Y%m%dT%H%M')
+    now = datetime.now().strftime('%Y%m%dT%H%M%S')
 
     # create result directory if not existent
     result_dir = os.path.join('result', '{}-{}'.format(result_name, now))
@@ -89,6 +89,10 @@ def prepare_result_directory(result_name):
 
 def setup_solver(optim, logfile='solver.log'):
     """ """
+    opt={}
+    opt["parameters.output.writelevel"]=1
+    opt["warmstart"]=True
+    opt["log"]="{}".format(logfile)
     if optim.name == 'gurobi':
         # reference with list of option names
         # http://www.gurobi.com/documentation/5.6/reference-manual/parameters
@@ -101,6 +105,8 @@ def setup_solver(optim, logfile='solver.log'):
         optim.set_options("log={}".format(logfile))
         # optim.set_options("tmlim=7200")  # seconds
         # optim.set_options("mipgap=.0005")
+    elif optim.name == 'cplex':
+        opt={}
     else:
         print("Warning from setup_solver: no options set for solver "
               "'{}'!".format(optim.name))
@@ -127,7 +133,7 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=False)
+    result = optim.solve(prob, tee=True)
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
@@ -198,16 +204,7 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    
-    t1=time.process_time()
-    result = optim.solve(prob, tee=False)
-    t2=time.process_time()
-    print ("Erstlösen: "+str (t2-t1) + "s\n")
-    
-    t1=time.process_time()
-    result = optim.solve(prob, tee=False)
-    t2=time.process_time()
-    print ("Zweitlösen: "+str (t2-t1) + "s\n")
+    result = optim.solve(prob, tee=True)
     
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
@@ -253,7 +250,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (3500, 500)  # time step selection
+    (offset, length) = (3500, 168)  # time step selection
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -293,12 +290,14 @@ if __name__ == '__main__':
     #normal scenarios must be last, since the base model would be destroyed
     scenarios = [
         scenario_base
+        ,urbs.alternative_scenario_base
         ,urbs.alternative_scenario_co2_tax_mid
         ,urbs.alternative_scenario_co2_limit
         ,urbs.alternative_scenario_no_dsm
         ,urbs.alternative_scenario_north_process_caps
         ,urbs.alternative_scenario_stock_prices
         ,urbs.alternative_scenario_all_together
+        ,urbs.alternative_scenario_base
         
         ,scenario_co2_tax_mid
         ,scenario_co2_limit
