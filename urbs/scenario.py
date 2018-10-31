@@ -1,4 +1,5 @@
 from .model import *
+from .input import split_columns
 import pdb
 import time
 
@@ -124,6 +125,59 @@ def alternative_scenario_all_together(prob, reverse):
         return prob
 
 
+def alternative_scenario_new_timeseries (prob, reverse, filename="new_timeseries.xlsx"):
+    if not reverse:
+        sheetnames=load_timeseries (prob,filename, reverse)       
+        if "demand" in sheetnames:
+            print ("Demand")
+            prob.del_component(prob.res_vertex)
+            prob.del_component(prob.res_vertex_index)
+            prob.res_vertex = pyomo.Constraint(
+                prob.tm, prob.com_tuples,
+                rule=res_vertex_rule,
+                doc='storage + transmission + process + source + buy - sell == demand')
+        if "SupIm" in sheetnames:
+            print ("SupIm")
+            prob.del_component(prob.def_intermittent_supply)
+            prob.del_component(prob.def_intermittent_supply_index)
+            prob.def_intermittent_supply = pyomo.Constraint(
+                prob.tm, prob.pro_input_tuples,
+                rule=def_intermittent_supply_rule,
+                doc='process output = process capacity * supim timeseries')
+        if "Buy-Sell-Price" in sheetnames:   
+            print ("Buy-Sell-Price")
+            prob.del_component(prob.def_costs)
+            prob.def_costs = pyomo.Constraint(
+                prob.cost_type,
+                rule=def_costs_rule,
+                doc='main cost function by cost type')
+            
+    if reverse:
+        sheetnames=load_timeseries (prob,filename, reverse)       
+        if "demand" in sheetnames:
+            print ("Demand")
+            prob.del_component(prob.res_vertex)
+            prob.del_component(prob.res_vertex_index)
+            prob.res_vertex = pyomo.Constraint(
+                prob.tm, prob.com_tuples,
+                rule=res_vertex_rule,
+                doc='storage + transmission + process + source + buy - sell == demand')
+        if "SupIm" in sheetnames:
+            print ("SupIm")
+            prob.del_component(prob.def_intermittent_supply)
+            prob.del_component(prob.def_intermittent_supply_index)
+            prob.def_intermittent_supply = pyomo.Constraint(
+                prob.tm, prob.pro_input_tuples,
+                rule=def_intermittent_supply_rule,
+                doc='process output = process capacity * supim timeseries')
+        if "Buy-Sell-Price" in sheetnames:   
+            print ("Buy-Sell-Price")
+            prob.del_component(prob.def_costs)
+            prob.def_costs = pyomo.Constraint(
+                prob.cost_type,
+                rule=def_costs_rule,
+                doc='main cost function by cost type')  
+    return prob
         
 #Möglichkeit: Lass Benutzer Scenario im Excel File erstellen, lade dieses, vergleiche die Daten mit prob und update prob, an den geänderten Stellen
 def del_dsm (prob):
@@ -260,3 +314,26 @@ def recreate_dsm (prob):
         rule=res_vertex_rule,
         doc='storage + transmission + process + source + buy - sell == demand')    
 
+def load_timeseries (prob, filename, reverse):
+    with pd.ExcelFile(filename) as xls:
+        try: 
+            sheetnames = xls.sheet_names
+        except KeyError:
+            print ("Could not find file")
+        #pdb.set_trace()
+        if not reverse: #Following is not necessary if rebuilding to base scenario is wanted
+            for temp in sheetnames:
+                temp2=xls.parse(temp).set_index(["t"])
+                temp2.columns = split_columns(temp2.columns, '.')
+                if str(temp) == "demand":
+                    prob.demand_dict=temp2.to_dict()
+                if str(temp) == "SupIm":
+                    prob.supim_dict=temp2.to_dict()
+                if str(temp) == "Buy-Sell-Price":
+                    prob.buy_sell_price_dict=temp2.to_dict()
+        return sheetnames
+
+    
+    
+    
+    
