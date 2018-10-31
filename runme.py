@@ -293,23 +293,19 @@ if __name__ == '__main__':
     #normal scenarios must be last, since the base model would be destroyed
     scenarios = [
         scenario_base
-        ,scenario_base
-        ,scenario_base
-        ,scenario_base
-        ,scenario_base
-        #,urbs.alternative_scenario_co2_tax_mid
-        #,urbs.alternative_scenario_co2_limit
-        #,urbs.alternative_scenario_no_dsm
-        #,urbs.alternative_scenario_north_process_caps
-        #,urbs.alternative_scenario_stock_prices
-        #,urbs.alternative_scenario_all_together
+        ,urbs.alternative_scenario_co2_tax_mid
+        ,urbs.alternative_scenario_co2_limit
+        ,urbs.alternative_scenario_no_dsm
+        ,urbs.alternative_scenario_north_process_caps
+        ,urbs.alternative_scenario_stock_prices
+        ,urbs.alternative_scenario_all_together
         
-        #,scenario_co2_tax_mid
-        #,scenario_co2_limit
-        #,scenario_no_dsm
-        #,scenario_north_process_caps
-        #,scenario_stock_prices
-        #,scenario_all_together
+        ,scenario_co2_tax_mid
+        ,scenario_co2_limit
+        ,scenario_no_dsm
+        ,scenario_north_process_caps
+        ,scenario_stock_prices
+        ,scenario_all_together
         ]
     
     #load Data from Excel sheet

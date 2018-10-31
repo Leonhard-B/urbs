@@ -3,6 +3,10 @@ import pdb
 import time
 
 #Added by Leon in order to update constrains for altenrative scenarios
+
+def alternative_scenario_base (prob, reverse):
+    return prob
+
 def alternative_scenario_stock_prices(prob, reverse):
     # change stock commodity prices
     if not reverse:
@@ -15,8 +19,6 @@ def alternative_scenario_stock_prices(prob, reverse):
             rule=def_costs_rule,
             doc='main cost function by cost type')
         return prob
-
-
     if reverse:
         for x in tuple(prob.commodity_dict["price"].keys()): 
             if x[2]=="Stock": 
@@ -103,7 +105,6 @@ def alternative_scenario_no_dsm(prob, reverse):
     if not reverse:
         del_dsm(prob)
         return prob
-    
     if reverse:
         recreate_dsm(prob)
         return prob
@@ -161,11 +162,6 @@ def del_dsm (prob):
             rule=res_vertex_rule,
             doc='storage + transmission + process + source + buy - sell == demand')
     
-def change_dsm (prob):
-    return prob
-        
-def upd_dsm_constraints (prob):
-    return prob
         
 def recreate_dsm (prob):
     #dsm_variables & vertex rule
