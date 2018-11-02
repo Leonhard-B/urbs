@@ -8,27 +8,20 @@ import time
 def alternative_scenario_base (prob, reverse):
     return prob
 
+
 def alternative_scenario_stock_prices(prob, reverse):
     # change stock commodity prices
     if not reverse:
         for x in tuple(prob.commodity_dict["price"].keys()): 
             if x[2]=="Stock": 
                 prob.commodity_dict["price"][x]*=100
-        prob.del_component(prob.def_costs)
-        prob.def_costs = pyomo.Constraint(
-            prob.cost_type,
-            rule=def_costs_rule,
-            doc='main cost function by cost type')
+        update_cost(prob)
         return prob
     if reverse:
         for x in tuple(prob.commodity_dict["price"].keys()): 
             if x[2]=="Stock": 
                 prob.commodity_dict["price"][x]*=0.01
-        prob.del_component(prob.def_costs)
-        prob.def_costs = pyomo.Constraint(
-            prob.cost_type,
-            rule=def_costs_rule,
-            doc='main cost function by cost type')
+        update_cost(prob)
         return prob
     
     
@@ -36,17 +29,11 @@ def alternative_scenario_co2_limit(prob, reverse):
     # change global CO2 limit
     if not reverse:
         prob.global_prop_dict["value"]["CO2 limit"]*=0.05
-        prob.del_component(prob.res_global_co2_limit)
-        prob.res_global_co2_limit = pyomo.Constraint(
-            rule=res_global_co2_limit_rule,
-            doc='total co2 commodity output <= Global CO2 limit')
+        update_co2_limit(prob)
         return prob
     if reverse:
         prob.global_prop_dict["value"]["CO2 limit"]*=20
-        prob.del_component(prob.res_global_co2_limit)
-        prob.res_global_co2_limit = pyomo.Constraint(
-            rule=res_global_co2_limit_rule,
-            doc='total co2 commodity output <= Global CO2 limit')
+        update_co2_limit(prob)
         return prob
     
 
@@ -54,19 +41,11 @@ def alternative_scenario_co2_tax_mid(prob, reverse):
     # change CO2 price in Mid
     if not reverse:
         prob.commodity_dict["price"][('Mid', 'CO2', 'Env')]=50
-        prob.del_component(prob.def_costs)
-        prob.def_costs = pyomo.Constraint(
-            prob.cost_type,
-            rule=def_costs_rule,
-            doc='main cost function by cost type')
+        update_cost(prob)
         return prob
     if reverse:
         prob.commodity_dict["price"][('Mid', 'CO2', 'Env')]=prob._data["commodity"]["price"][('Mid', 'CO2', 'Env')]
-        prob.del_component(prob.def_costs)
-        prob.def_costs = pyomo.Constraint(
-            prob.cost_type,
-            rule=def_costs_rule,
-            doc='main cost function by cost type')
+        update_cost(prob)
         return prob
     
 
@@ -75,30 +54,12 @@ def alternative_scenario_north_process_caps(prob, reverse):
     if not reverse:
         prob.process_dict["cap-up"][('North', 'Hydro plant')]*=0.5
         prob.process_dict["cap-up"][('North', 'Biomass plant')]*=0.25 
-        prob.del_component(prob.def_process_capacity)
-        prob.def_process_capacity = pyomo.Constraint(
-            prob.pro_tuples,
-            rule=def_process_capacity_rule,
-            doc='total process capacity = inst-cap + new capacity')
-        prob.del_component(prob.res_process_capacity)
-        prob.res_process_capacity = pyomo.Constraint(
-            prob.pro_tuples,
-            rule=res_process_capacity_rule,
-            doc='process.cap-lo <= total process capacity <= process.cap-up')   
+        update_process_capacity(prob)
         return prob
     if reverse:
         prob.process_dict["cap-up"][('North', 'Hydro plant')]*=2
         prob.process_dict["cap-up"][('North', 'Biomass plant')]*=4
-        prob.del_component(prob.def_process_capacity)
-        prob.def_process_capacity = pyomo.Constraint(
-            prob.pro_tuples,
-            rule=def_process_capacity_rule,
-            doc='total process capacity = inst-cap + new capacity')
-        prob.del_component(prob.res_process_capacity)
-        prob.res_process_capacity = pyomo.Constraint(
-            prob.pro_tuples,
-            rule=res_process_capacity_rule,
-            doc='process.cap-lo <= total process capacity <= process.cap-up')
+        update_process_capacity(prob)
         return prob
 
 
@@ -129,56 +90,29 @@ def alternative_scenario_new_timeseries (prob, reverse, filename="new_timeseries
     if not reverse:
         sheetnames=load_timeseries (prob,filename, reverse)       
         if "demand" in sheetnames:
-            print ("Demand")
-            prob.del_component(prob.res_vertex)
-            prob.del_component(prob.res_vertex_index)
-            prob.res_vertex = pyomo.Constraint(
-                prob.tm, prob.com_tuples,
-                rule=res_vertex_rule,
-                doc='storage + transmission + process + source + buy - sell == demand')
+            update_res_vertex(prob)
         if "SupIm" in sheetnames:
-            print ("SupIm")
-            prob.del_component(prob.def_intermittent_supply)
-            prob.del_component(prob.def_intermittent_supply_index)
-            prob.def_intermittent_supply = pyomo.Constraint(
-                prob.tm, prob.pro_input_tuples,
-                rule=def_intermittent_supply_rule,
-                doc='process output = process capacity * supim timeseries')
+            update_supim(prob)
         if "Buy-Sell-Price" in sheetnames:   
-            print ("Buy-Sell-Price")
-            prob.del_component(prob.def_costs)
-            prob.def_costs = pyomo.Constraint(
-                prob.cost_type,
-                rule=def_costs_rule,
-                doc='main cost function by cost type')
+            update_cost(prob)
+        if 'TimeVarEff' in sheetnames:
+            update_TimeVarEff(prob)
             
     if reverse:
         sheetnames=load_timeseries (prob,filename, reverse)       
         if "demand" in sheetnames:
-            print ("Demand")
-            prob.del_component(prob.res_vertex)
-            prob.del_component(prob.res_vertex_index)
-            prob.res_vertex = pyomo.Constraint(
-                prob.tm, prob.com_tuples,
-                rule=res_vertex_rule,
-                doc='storage + transmission + process + source + buy - sell == demand')
+            update_res_vertex(prob)
         if "SupIm" in sheetnames:
-            print ("SupIm")
-            prob.del_component(prob.def_intermittent_supply)
-            prob.del_component(prob.def_intermittent_supply_index)
-            prob.def_intermittent_supply = pyomo.Constraint(
-                prob.tm, prob.pro_input_tuples,
-                rule=def_intermittent_supply_rule,
-                doc='process output = process capacity * supim timeseries')
-        if "Buy-Sell-Price" in sheetnames:   
-            print ("Buy-Sell-Price")
-            prob.del_component(prob.def_costs)
-            prob.def_costs = pyomo.Constraint(
-                prob.cost_type,
-                rule=def_costs_rule,
-                doc='main cost function by cost type')  
+            update_supim(prob)
+        if "Buy-Sell-Price" in sheetnames:
+            update_cost(prob) 
+        if 'TimeVarEff' in sheetnames:
+            update_TimeVarEff(prob)
+
     return prob
-        
+
+
+
 #Möglichkeit: Lass Benutzer Scenario im Excel File erstellen, lade dieses, vergleiche die Daten mit prob und update prob, an den geänderten Stellen
 def del_dsm (prob):
         #pdb.set_trace()
@@ -209,19 +143,8 @@ def del_dsm (prob):
         prob.res_dsm_recovery = pyomo.Constraint.Skip
         
         #The following lines cause 99% of work for the formation of this scenario
-        prob.del_component(prob.res_vertex)
-        prob.del_component(prob.res_vertex_index)   #If the size/the number of constraints change, index also has to be replaced!
-        prob.res_vertex = pyomo.Constraint(
-            prob.tm, prob.com_tuples,
-            rule=res_vertex_rule,
-            doc='storage + transmission + process + source + buy - sell == demand')
-    
-def change_dsm (prob):
-    return prob
-        
-def upd_dsm_constraints (prob):
-    return prob
-        
+        update_res_vertex(prob)
+
 def recreate_dsm (prob):
     #dsm_variables & vertex rule
     #pdb.set_trace()
@@ -307,20 +230,22 @@ def recreate_dsm (prob):
         doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
     
     #The following lines cause 50% of rebuilding work
-    prob.del_component(prob.res_vertex)
-    prob.del_component(prob.res_vertex_index)
-    prob.res_vertex = pyomo.Constraint(
-        prob.tm, prob.com_tuples,
-        rule=res_vertex_rule,
-        doc='storage + transmission + process + source + buy - sell == demand')    
+    update_res_vertex(prob) 
+    
+def change_dsm (prob):
+    #not implemented yet
+    return prob
+        
+def upd_dsm_constraints (prob):
+    #not implemented yet
+    return prob
 
-def load_timeseries (prob, filename, reverse):
+def load_timeseries (prob, filename, reverse): #Check für geänderte Größe wichtig?
     with pd.ExcelFile(filename) as xls:
         try: 
             sheetnames = xls.sheet_names
         except KeyError:
-            print ("Could not find file")
-        #pdb.set_trace()
+            print ("Could not find file for new timeseries scenario")
         if not reverse: #Following is not necessary if rebuilding to base scenario is wanted
             for temp in sheetnames:
                 temp2=xls.parse(temp).set_index(["t"])
@@ -331,9 +256,103 @@ def load_timeseries (prob, filename, reverse):
                     prob.supim_dict=temp2.to_dict()
                 if str(temp) == "Buy-Sell-Price":
                     prob.buy_sell_price_dict=temp2.to_dict()
+                if str(temp) == "TimeVarEff":
+                    prob.eff_factor_dict=temp2.to_dict()
+        if reverse:
+            for temp in sheetnames:
+                if str(temp) == "demand":
+                    prob.demand_dict=prob._data["demand"].to_dict()
+                if str(temp) == "SupIm":
+                    prob.supim_dict=prob._data["supim"].to_dict()
+                if str(temp) == "Buy-Sell-Price":
+                    prob.buy_sell_price_dict=prob._data["buy_sell_price"].to_dict()
+                if str(temp) == "TimeVarEff":
+                    prob.eff_factor_dict=prob._data["eff_factor"].to_dict()
         return sheetnames
 
+def update_TimeVarEff (prob):
+            prob.del_component(prob.pro_timevar_output_tuples)
+            prob.del_component(prob.pro_timevar_output_tuples_domain)
+            prob.del_component(prob.pro_timevar_output_tuples_domain_index_0)
+            prob.pro_timevar_output_tuples = pyomo.Set(
+                within=prob.sit*prob.pro*prob.com,
+                initialize=[(site, process, commodity)
+                            for (site, process) in tuple(prob.eff_factor_dict.keys())
+                            for (pro, commodity) in tuple(prob.r_out_dict.keys())
+                            if process == pro],
+                doc='Outputs of processes with time dependent efficiency')
+                
+            prob.del_component(prob.def_process_output)
+            prob.del_component(prob.def_process_output_index)
+            prob.del_component(prob.def_process_output_index_1)
+            prob.del_component(prob.def_process_output_index_1_index_0)
+            prob.def_process_output = pyomo.Constraint(
+                prob.tm, (prob.pro_output_tuples - prob.pro_partial_output_tuples -
+                       prob.pro_timevar_output_tuples),
+                rule=def_process_output_rule,
+                doc='process output = process throughput * output ratio')
+            
+            prob.del_component(prob.def_process_timevar_output)
+            prob.del_component(prob.def_process_timevar_output_index)
+            prob.del_component(prob.def_process_timevar_output_index_1)
+            prob.del_component(prob.def_process_timevar_output_index_1_index_1)
+            prob.def_process_timevar_output = pyomo.Constraint(
+                prob.tm, (prob.pro_timevar_output_tuples -
+                    (prob.pro_partial_output_tuples & prob.pro_timevar_output_tuples)),
+                rule=def_pro_timevar_output_rule,
+                doc='e_pro_out = tau_pro * r_out * eff_factor')
+                
+            prob.del_component(prob.def_process_partial_timevar_output)
+            prob.del_component(prob.def_process_partial_timevar_output_index)
+            prob.del_component(prob.def_process_partial_timevar_output_index_1)
+            prob.def_process_partial_timevar_output = pyomo.Constraint(
+                prob.tm, prob.pro_partial_output_tuples & prob.pro_timevar_output_tuples,
+                rule=def_pro_partial_timevar_output_rule,
+                doc='e_pro_out = tau_pro * r_out * eff_factor')
     
+def update_cost (prob):
+    prob.del_component(prob.def_costs)
+    prob.def_costs = pyomo.Constraint(
+        prob.cost_type,
+        rule=def_costs_rule,
+        doc='main cost function by cost type')
     
-    
-    
+def update_supim (prob):
+    prob.del_component(prob.def_intermittent_supply)
+    prob.del_component(prob.def_intermittent_supply_index)
+    prob.def_intermittent_supply = pyomo.Constraint(
+        prob.tm, prob.pro_input_tuples,
+        rule=def_intermittent_supply_rule,
+        doc='process output = process capacity * supim timeseries')
+
+def update_res_vertex (prob):
+    prob.del_component(prob.res_vertex)
+    prob.del_component(prob.res_vertex_index)
+    prob.res_vertex = pyomo.Constraint(
+        prob.tm, prob.com_tuples,
+        rule=res_vertex_rule,
+        doc='storage + transmission + process + source + buy - sell == demand')
+
+def update_process_capacity(prob):
+    prob.del_component(prob.def_process_capacity)
+    prob.def_process_capacity = pyomo.Constraint(
+        prob.pro_tuples,
+        rule=def_process_capacity_rule,
+        doc='total process capacity = inst-cap + new capacity')
+    prob.del_component(prob.res_process_capacity)
+    prob.res_process_capacity = pyomo.Constraint(
+        prob.pro_tuples,
+        rule=res_process_capacity_rule,
+        doc='process.cap-lo <= total process capacity <= process.cap-up')
+
+def update_co2_limit (prob):
+    prob.del_component(prob.res_global_co2_limit)
+    prob.res_global_co2_limit = pyomo.Constraint(
+        rule=res_global_co2_limit_rule,
+        doc='total co2 commodity output <= Global CO2 limit')
+
+
+
+
+
+

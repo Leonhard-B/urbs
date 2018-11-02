@@ -89,10 +89,10 @@ def prepare_result_directory(result_name):
 
 def setup_solver(optim, logfile='solver.log'):
     """ """
-    opt={}
-    opt["parameters.output.writelevel"]=1
-    opt["warmstart"]=True
-    opt["log"]="{}".format(logfile)
+    #opt={}
+    #opt["parameters.output.writelevel"]=1
+    #opt["warmstart"]=True
+    #opt["log"]="{}".format(logfile)
     if optim.name == 'gurobi':
         # reference with list of option names
         # http://www.gurobi.com/documentation/5.6/reference-manual/parameters
@@ -106,7 +106,7 @@ def setup_solver(optim, logfile='solver.log'):
         # optim.set_options("tmlim=7200")  # seconds
         # optim.set_options("mipgap=.0005")
     elif optim.name == 'cplex':
-        opt={}
+        optim.set_options("log={}".format(logfile))
     else:
         print("Warning from setup_solver: no options set for solver "
               "'{}'!".format(optim.name))
@@ -266,7 +266,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (3500, 168)  # time step selection
+    (offset, length) = (3500, 3)  # time step selection
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -307,21 +307,21 @@ if __name__ == '__main__':
     scenarios = [
         scenario_base
         ,urbs.alternative_scenario_new_timeseries
-        # ,urbs.alternative_scenario_base
-        # ,urbs.alternative_scenario_co2_tax_mid
-        # ,urbs.alternative_scenario_co2_limit
-        # ,urbs.alternative_scenario_no_dsm
-        # ,urbs.alternative_scenario_north_process_caps
-        # ,urbs.alternative_scenario_stock_prices
-        # ,urbs.alternative_scenario_all_together
-        # ,urbs.alternative_scenario_base
+        ,urbs.alternative_scenario_base
+        ,urbs.alternative_scenario_co2_tax_mid
+        ,urbs.alternative_scenario_co2_limit
+        ,urbs.alternative_scenario_no_dsm
+        ,urbs.alternative_scenario_north_process_caps
+        ,urbs.alternative_scenario_stock_prices
+        ,urbs.alternative_scenario_all_together
+        ,urbs.alternative_scenario_base
         
-        # ,scenario_co2_tax_mid
-        # ,scenario_co2_limit
-        # ,scenario_no_dsm
-        # ,scenario_north_process_caps
-        # ,scenario_stock_prices
-        # ,scenario_all_together
+        ,scenario_co2_tax_mid
+        ,scenario_co2_limit
+        ,scenario_no_dsm
+        ,scenario_north_process_caps
+        ,scenario_stock_prices
+        ,scenario_all_together
         ]
     
     #load Data from Excel sheet
