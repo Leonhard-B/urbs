@@ -112,7 +112,7 @@ def alternative_scenario_new_timeseries (prob, reverse, filename="new_timeseries
     return prob
 
 
-
+#Constraint updating funtions:
 #Möglichkeit: Lass Benutzer Scenario im Excel File erstellen, lade dieses, vergleiche die Daten mit prob und update prob, an den geänderten Stellen
 def del_dsm (prob):
         #pdb.set_trace()

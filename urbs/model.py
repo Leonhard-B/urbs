@@ -6,7 +6,8 @@ from .input import *
 import time
 import pdb
 
-def create_model(data, dt=1, timesteps=None, dual=False):
+
+def create_model(data, dt=1, timesteps=None, dual=False, MIP=False):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
@@ -27,6 +28,10 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
+    if MIP:
+        m.MIP=pyomo.Var(within=pyomo.Boolean)
+    
+    
     # Parameters
 
     # weight = length of year (hours) / length of simulation (hours)
@@ -588,6 +593,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
 
     if dual:
         m.dual = pyomo.Suffix(direction=pyomo.Suffix.IMPORT)
+
     return m
 
 
@@ -614,6 +620,8 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     #                       amount of the commodity com
     power_surplus = - commodity_balance(m, tm, sit, com)
 
+    power_surplus -= m.MIP
+    
     # if com is a stock commodity, the commodity source term e_co_stock
     # can supply a possibly negative power_surplus
     if com in m.com_stock:
