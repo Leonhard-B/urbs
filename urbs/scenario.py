@@ -3,7 +3,15 @@ from .input import split_columns
 import pdb
 import time
 
-#Added by Leon in order to update constrains for altenrative scenarios
+# Alternative Scenarios don´t built up a whole new model. Instead they save time by using the existing base model
+# and by manipulating the dictionaries containing the data and only updating the affected constraints afterwards.
+# Since cloning of the model uses plenty of resources and consumes all the saved time by using the alternative scenarios
+# it is important to rebuilt the base scenario once the problem is solved. This is done by handing reverse=True to the scenario.
+# For new scenarios it might be helpful to create the 'normal' scenario first, then implement the alternative scenario 
+# and afterwards compare the corresponding .lp files. Here is the Plugin 'Compare' for Notepad++ very helpful. 
+# You immediately see which constraints need further updating.
+# For updating constraints you sometimes also need to delete the corresponding index to the constraint. Here you will get
+# helpful information at compile time.
 
 def alternative_scenario_base (prob, reverse):
     return prob
@@ -318,6 +326,14 @@ def update_cost (prob):
         doc='main cost function by cost type')
     
 def update_supim (prob):
+    """prob.del_component(prob.pro_input_tuples)
+    prob.pro_input_tuples = pyomo.Set(
+        within=prob.sit*prob.pro*prob.com,
+        initialize=[(site, process, commodity)
+                    for (site, process) in prob.pro_tuples
+                    for (pro, commodity) in tuple(prob.r_in_dict.keys())
+                    if process == pro],
+        doc='Commodities consumed by process by site, e.g. (Mid,PV,Solar)')"""
     prob.del_component(prob.def_intermittent_supply)
     prob.del_component(prob.def_intermittent_supply_index)
     prob.def_intermittent_supply = pyomo.Constraint(

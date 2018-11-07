@@ -117,7 +117,7 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     sce = scenario.__name__
     prob=scenario(prob, 0)
     #urbs.validate_input(data)
-    
+
     # refresh time stamp string and create filename for logfile
     now = prob.created
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
@@ -125,11 +125,12 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     #Write model to lp File
     model_filename = os.path.join(result_dir, '{}.lp').format(sce)
     prob.write(model_filename, io_options={"symbolic_solver_labels":True})
-    
+
     # solve model and read results
     optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=False)
+    assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
@@ -152,8 +153,6 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
         periods=plot_periods,
         figure_size=(24, 9))
     prob==scenario(prob, 1)
-    model_filename = os.path.join(result_dir, 'rebuilt_base_from_{}.lp').format(sce)
-    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
     return prob
     
     
@@ -200,13 +199,8 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    t1=time.time()
-    result = optim.solve(prob, tee=True)
+    result = optim.solve(prob, tee=False)
     assert str(result.solver.termination_condition) == 'optimal'
-    t2=time.time()
-    print (t2-t1)
-
-    
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
@@ -241,7 +235,7 @@ if __name__ == '__main__':
     start_time_proc=time.time()
     #Speicherbelegung=list()
     #Speicherbelegung.append(process.memory_info().rss/1000000)
-    
+
     input_file = 'mimo-example.xlsx'
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
     result_dir = prepare_result_directory(result_name)  # name + time stamp
@@ -252,10 +246,9 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (3500, 168)  # time step selection
+    (offset, length) = (0, 50)  # time step selection
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
-
 
     # plotting commodities/sites
     plot_tuples = [
@@ -292,22 +285,22 @@ if __name__ == '__main__':
     #normal scenarios must be last, since the base model would be destroyed
     scenarios = [
         scenario_base
-        # ,urbs.alternative_scenario_new_timeseries
-        # ,urbs.alternative_scenario_base
-        # ,urbs.alternative_scenario_co2_tax_mid
-        # ,urbs.alternative_scenario_co2_limit
-        # ,urbs.alternative_scenario_no_dsm
-        # ,urbs.alternative_scenario_north_process_caps
-        # ,urbs.alternative_scenario_stock_prices
-        #,urbs.alternative_scenario_all_together
-        #,urbs.alternative_scenario_base
+        ,urbs.alternative_scenario_base
+        ,urbs.alternative_scenario_new_timeseries
         
-        #,scenario_co2_tax_mid
-        #,scenario_co2_limit
-        #,scenario_no_dsm
-        #,scenario_north_process_caps
-        #,scenario_stock_prices
-        #,scenario_all_together
+        ,urbs.alternative_scenario_co2_tax_mid
+        ,urbs.alternative_scenario_co2_limit
+        ,urbs.alternative_scenario_no_dsm
+        ,urbs.alternative_scenario_north_process_caps
+        ,urbs.alternative_scenario_stock_prices
+        ,urbs.alternative_scenario_all_together
+        
+        ,scenario_co2_tax_mid
+        ,scenario_co2_limit
+        ,scenario_no_dsm
+        ,scenario_north_process_caps
+        ,scenario_stock_prices
+        ,scenario_all_together
         ]
     
     #load Data from Excel sheet
@@ -317,7 +310,7 @@ if __name__ == '__main__':
     for scenario in scenarios:
         #Speicherbelegung.append(process.memory_info().rss/1000000)
         t1=time.time()
-        szenario_start_time=time.time()
+        #szenario_start_time=time.time()
         
         #Falls es ein alternatives Szenario ist, soll run_alternative_scenario aufgerufen werden und das prob_base verwendet werden
         if str(scenario.__name__).find("alternative")>=0:
@@ -336,7 +329,8 @@ if __name__ == '__main__':
                             report_sites_name=report_sites_name)
 
         t2=time.time()
-        current_time=time.time()
+        print (str(scenario.__name__) + ": " + str(t2-t1))
+        #current_time=time.time()
         #print (
             #"\nZeit seit Start: " +str(current_time-start_time) +"s" +
             #"\nRechenzeit seit Start: "+str(t2-start_time_proc)+"s" +
