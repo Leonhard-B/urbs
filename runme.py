@@ -34,7 +34,7 @@ def scenario_stock_prices(data):
     # change stock commodity prices
     co = data['commodity']
     stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
-    co.loc[stock_commodities_only, 'price'] *= 100
+    co.loc[stock_commodities_only, 'price'] *= 1.5
     return data
 
 
@@ -89,10 +89,6 @@ def prepare_result_directory(result_name):
 
 def setup_solver(optim, logfile='solver.log'):
     """ """
-    #opt={}
-    #opt["parameters.output.writelevel"]=1
-    #opt["warmstart"]=True
-    #opt["log"]="{}".format(logfile)
     if optim.name == 'gurobi':
         # reference with list of option names
         # http://www.gurobi.com/documentation/5.6/reference-manual/parameters
@@ -133,7 +129,7 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=True, warmstart=True, keepfiles=True)
+    result = optim.solve(prob, tee=False)
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
@@ -168,7 +164,7 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
 
     Args:
         data: content of the excel sheet
-        input_file: filename to an Excel spreadsheet for urbs.read_excel             #geändert zu data
+        input_file: filename to an Excel spreadsheet for urbs.read_excel             #changed to data
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
         result_dir: directory name for result spreadsheet and plots
@@ -182,16 +178,16 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     Returns:
         the urbs model instance
     """
-    
+
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     #klone Objekt, um Daten nicht erneut auslesen zu müssen
     data2=deepcopy(data)
     data2 = scenario(data2)
     urbs.validate_input(data2)
-       
+
     # create model
-    prob = urbs.create_model(data2, dt, timesteps, MIP=True)
+    prob = urbs.create_model(data2, dt, timesteps)
     
     #Write model to lp File
     model_filename = os.path.join(result_dir, '{}.lp').format(sce)
@@ -200,32 +196,16 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     # refresh time stamp string and create filename for logfile
     now = prob.created
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
-    
+
     # solve model and read results
     optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    opt={}
-    #opt["resultfile"]="myModel.mps"
-    #opt["parameters.output.writelevel"]=1
-    #opt["warmstart"]=True
-    opt["lpmethod"]=2
-    opt["MIPDisplay"]=4
-    #opt["advance"]=1
-    #pdb.set_trace()
-    print ("HAllo!!\n\n\n")
     t1=time.time()
-    result = optim.solve(prob, tee=False, warmstart=True, keepfiles=True)
+    result = optim.solve(prob, tee=True)
     assert str(result.solver.termination_condition) == 'optimal'
     t2=time.time()
     print (t2-t1)
-    print (optim.warm_start_capable())
-    print (optim.available())
-    
-    t1=time.time()
-    result = optim.solve(prob, tee=False, warmstart=True, keepfiles=True)
-    t2=time.time()
-    print ("Zweitlösen:")
-    print (t2-t1)
+
     
 
     # save problem solution (and input data) to HDF5 file
@@ -276,7 +256,7 @@ if __name__ == '__main__':
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
-    
+
     # plotting commodities/sites
     plot_tuples = [
         ('North', 'Elec'),

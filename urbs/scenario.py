@@ -14,13 +14,13 @@ def alternative_scenario_stock_prices(prob, reverse):
     if not reverse:
         for x in tuple(prob.commodity_dict["price"].keys()): 
             if x[2]=="Stock": 
-                prob.commodity_dict["price"][x]*=100
+                prob.commodity_dict["price"][x]*=1.5
         update_cost(prob)
         return prob
     if reverse:
         for x in tuple(prob.commodity_dict["price"].keys()): 
             if x[2]=="Stock": 
-                prob.commodity_dict["price"][x]*=0.01
+                prob.commodity_dict["price"][x]*=1/1.5
         update_cost(prob)
         return prob
     
