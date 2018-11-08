@@ -97,7 +97,7 @@ def alternative_scenario_all_together(prob, reverse):
 def alternative_scenario_new_timeseries (prob, reverse, filename="new_timeseries.xlsx"):
     if not reverse:
         sheetnames=load_timeseries (prob,filename, reverse)       
-        if "demand" in sheetnames:
+        if "Demand" in sheetnames:
             update_res_vertex(prob)
         if "SupIm" in sheetnames:
             update_supim(prob)
@@ -105,10 +105,9 @@ def alternative_scenario_new_timeseries (prob, reverse, filename="new_timeseries
             update_cost(prob)
         if 'TimeVarEff' in sheetnames:
             update_TimeVarEff(prob)
-            
     if reverse:
         sheetnames=load_timeseries (prob,filename, reverse)       
-        if "demand" in sheetnames:
+        if "Demand" in sheetnames:
             update_res_vertex(prob)
         if "SupIm" in sheetnames:
             update_supim(prob)
@@ -116,14 +115,12 @@ def alternative_scenario_new_timeseries (prob, reverse, filename="new_timeseries
             update_cost(prob) 
         if 'TimeVarEff' in sheetnames:
             update_TimeVarEff(prob)
-
     return prob
 
 
 #Constraint updating funtions:
 #Möglichkeit: Lass Benutzer Scenario im Excel File erstellen, lade dieses, vergleiche die Daten mit prob und update prob, an den geänderten Stellen
 def del_dsm (prob):
-        #pdb.set_trace()
         # empty the DSM dataframe completely
         prob.dsm_dict=pd.DataFrame().to_dict()
         
@@ -155,8 +152,6 @@ def del_dsm (prob):
 
 def recreate_dsm (prob):
     #dsm_variables & vertex rule
-    #pdb.set_trace()
-    #insert all the constraints!
     prob.dsm_dict=prob._data["dsm"].to_dict()
     try:
         myset=tuple(prob.dsm_dict["delay"].keys())
@@ -258,7 +253,7 @@ def load_timeseries (prob, filename, reverse): #Check für geänderte Größe wi
             for temp in sheetnames:
                 temp2=xls.parse(temp).set_index(["t"])
                 temp2.columns = split_columns(temp2.columns, '.')
-                if str(temp) == "demand":
+                if str(temp) == "Demand":
                     prob.demand_dict=temp2.to_dict()
                 if str(temp) == "SupIm":
                     prob.supim_dict=temp2.to_dict()
@@ -326,14 +321,6 @@ def update_cost (prob):
         doc='main cost function by cost type')
     
 def update_supim (prob):
-    """prob.del_component(prob.pro_input_tuples)
-    prob.pro_input_tuples = pyomo.Set(
-        within=prob.sit*prob.pro*prob.com,
-        initialize=[(site, process, commodity)
-                    for (site, process) in prob.pro_tuples
-                    for (pro, commodity) in tuple(prob.r_in_dict.keys())
-                    if process == pro],
-        doc='Commodities consumed by process by site, e.g. (Mid,PV,Solar)')"""
     prob.del_component(prob.def_intermittent_supply)
     prob.del_component(prob.def_intermittent_supply_index)
     prob.def_intermittent_supply = pyomo.Constraint(

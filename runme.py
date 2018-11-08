@@ -222,7 +222,7 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
-    return prob
+
 
 
 
@@ -246,7 +246,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (0, 50)  # time step selection
+    (offset, length) = (3500, 50)  # time step selection
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -284,23 +284,23 @@ if __name__ == '__main__':
     # select scenarios to be run
     #normal scenarios must be last, since the base model would be destroyed
     scenarios = [
-        scenario_base
-        ,urbs.alternative_scenario_base
+        #scenario_base
+        urbs.alternative_scenario_base
         ,urbs.alternative_scenario_new_timeseries
         
-        ,urbs.alternative_scenario_co2_tax_mid
-        ,urbs.alternative_scenario_co2_limit
-        ,urbs.alternative_scenario_no_dsm
-        ,urbs.alternative_scenario_north_process_caps
-        ,urbs.alternative_scenario_stock_prices
-        ,urbs.alternative_scenario_all_together
+        # ,urbs.alternative_scenario_co2_tax_mid
+        # ,urbs.alternative_scenario_co2_limit
+        # ,urbs.alternative_scenario_no_dsm
+        # ,urbs.alternative_scenario_north_process_caps
+        # ,urbs.alternative_scenario_stock_prices
+        # ,urbs.alternative_scenario_all_together
         
-        ,scenario_co2_tax_mid
-        ,scenario_co2_limit
-        ,scenario_no_dsm
-        ,scenario_north_process_caps
-        ,scenario_stock_prices
-        ,scenario_all_together
+        # ,scenario_co2_tax_mid
+        # ,scenario_co2_limit
+        # ,scenario_no_dsm
+        # ,scenario_north_process_caps
+        # ,scenario_stock_prices
+        # ,scenario_all_together
         ]
     
     #load Data from Excel sheet
@@ -313,7 +313,11 @@ if __name__ == '__main__':
         #szenario_start_time=time.time()
         
         #Falls es ein alternatives Szenario ist, soll run_alternative_scenario aufgerufen werden und das prob_base verwendet werden
-        if str(scenario.__name__).find("alternative")>=0:
+        if str(scenario.__name__).find("alternative")>=0 or str(scenario.__name__).find("base")>=0:
+            try: 
+                prob
+            except NameError:
+                prob = urbs.create_model(data, dt, timesteps)
             prob = run_alternative_scenario (prob, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
@@ -321,7 +325,7 @@ if __name__ == '__main__':
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
         else:
-             prob=run_scenario(data, timesteps, scenario, result_dir, dt,
+            run_scenario(data, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,
