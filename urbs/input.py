@@ -93,14 +93,14 @@ def read_excel(filename):
 def pyomo_model_prep(data, timesteps):
     m = pyomo.ConcreteModel()
 
-    m.timesteps = timesteps         #(m.t, m.tt, m.tm, m.timesteps all the same! Reduction possible?)
+    m.timesteps = timesteps
     process = data['process']
     transmission = data['transmission']  
     storage = data['storage']
     
     # Converting Data frames to dict
     m.global_prop_dict = data['global_prop'].drop('description', axis=1).to_dict()
-    m.site_dict=data["site"].to_dict()
+    m.site_dict = data["site"].to_dict()
     m.commodity_dict = data["commodity"].to_dict()
     m.demand_dict = data["demand"].to_dict()
     m.supim_dict = data["supim"].to_dict()
@@ -109,16 +109,15 @@ def pyomo_model_prep(data, timesteps):
     m.eff_factor_dict = data["eff_factor"].to_dict()
 
     # process input/output ratios
-    m.r_in_dict = data['process_commodity'].xs('In', level='Direction')['ratio'].to_dict()
-    m.r_out_dict = data['process_commodity'].xs('Out', level='Direction')['ratio'].to_dict()    
+    m.r_in_dict = (data['process_commodity'].xs('In', level='Direction')
+                   ['ratio'].to_dict())
+    m.r_out_dict = (data['process_commodity'].xs('Out', level='Direction')
+                    ['ratio'].to_dict())
     
     # process areas
     proc_area = data["process"]['area-per-cap']
-    proc_area = proc_area[proc_area >= 0]     
+    proc_area = proc_area[proc_area >= 0]
     m.proc_area_dict=proc_area.to_dict()
-    sit_area = data["site"]['area']                     #What is this for? Program runs without m.sit_area, too!
-    sit_area = sit_area[sit_area >= 0]  
-    m.sit_area_dict=sit_area.to_dict()
     
     # input ratios for partial efficiencies
     # only keep those entries whose values are
@@ -216,6 +215,7 @@ def get_input(prob, name):
         the corresponding input DataFrame
 
     """
+
     if hasattr(prob, name):
         # classic case: input data DataFrames are accessible via named
         # attributes, e.g. `prob.process`.

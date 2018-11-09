@@ -115,7 +115,14 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
  
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    prob=scenario(prob, 0)
+    if str(sce).find("alternative_scenario_new_timeseries") >=0:
+        pdb.set_trace()
+        global timeseries_number
+        sce=sce+str(timeseries_number[0])
+        filename=os.path.join("input", "{}.xlsx").format(sce)
+        prob=urbs.alternative_scenario_new_timeseries_(prob,0,filename)
+    else:
+        prob=scenario(prob, 0)
     #urbs.validate_input(data)
 
     # refresh time stamp string and create filename for logfile
@@ -127,7 +134,7 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     prob.write(model_filename, io_options={"symbolic_solver_labels":True})
 
     # solve model and read results
-    optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=False)
     assert str(result.solver.termination_condition) == 'optimal'
@@ -152,7 +159,10 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
-    prob==scenario(prob, 1)
+    if str(sce).find("alternative_scenario_new_timeseries") >=0:
+        urbs.alternative_scenario_new_timeseries_(prob, 1)
+    else:
+        prob = scenario(prob, 1)
     return prob
     
     
@@ -199,7 +209,7 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=False)
+    result = optim.solve(prob, tee=True)
     assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
@@ -280,14 +290,15 @@ if __name__ == '__main__':
         'North': (200, 200, 230)}
     for country, color in my_colors.items():
         urbs.COLORS[country] = color
-
+    
+    timeseries_number=[0]       #Helper number used for global declaration of current timeseries sheet
     # select scenarios to be run
     #normal scenarios must be last, since the base model would be destroyed
     scenarios = [
         #scenario_base
-        urbs.alternative_scenario_base
-        ,urbs.alternative_scenario_new_timeseries
-        
+        #urbs.alternative_scenario_base
+        urbs.alternative_scenario_new_timeseries(timeseries_number,1) #wrapping as string necessary?
+        ,urbs.alternative_scenario_new_timeseries(timeseries_number,2)
         # ,urbs.alternative_scenario_co2_tax_mid
         # ,urbs.alternative_scenario_co2_limit
         # ,urbs.alternative_scenario_no_dsm
@@ -305,7 +316,8 @@ if __name__ == '__main__':
     
     #load Data from Excel sheet
     data = urbs.read_excel(input_file)
-
+    urbs.validate_input(data)
+    
     
     for scenario in scenarios:
         #Speicherbelegung.append(process.memory_info().rss/1000000)

@@ -94,7 +94,8 @@ def alternative_scenario_all_together(prob, reverse):
         return prob
 
 
-def alternative_scenario_new_timeseries (prob, reverse, filename="new_timeseries.xlsx"):
+def alternative_scenario_new_timeseries_ (prob, reverse, 
+        filename="input\\alternative_scenario_new_timeseries.xlsx"""):
     if not reverse:
         sheetnames=load_timeseries (prob,filename, reverse)       
         if "Demand" in sheetnames:
@@ -105,6 +106,7 @@ def alternative_scenario_new_timeseries (prob, reverse, filename="new_timeseries
             update_cost(prob)
         if 'TimeVarEff' in sheetnames:
             update_TimeVarEff(prob)
+        #del timerseries_number
     if reverse:
         sheetnames=load_timeseries (prob,filename, reverse)       
         if "Demand" in sheetnames:
@@ -118,8 +120,13 @@ def alternative_scenario_new_timeseries (prob, reverse, filename="new_timeseries
     return prob
 
 
-#Constraint updating funtions:
-#Möglichkeit: Lass Benutzer Scenario im Excel File erstellen, lade dieses, vergleiche die Daten mit prob und update prob, an den geänderten Stellen
+def alternative_scenario_new_timeseries(timeseries_number, number):
+    timeseries_number[0]=number
+    return alternative_scenario_new_timeseries_
+
+# Constraint updating funtions:
+# Möglichkeit: Lass Benutzer Scenario im Excel File erstellen, lade dieses, 
+# vergleiche die Daten mit prob und update prob an den geänderten Stellen
 def del_dsm (prob):
         # empty the DSM dataframe completely
         prob.dsm_dict=pd.DataFrame().to_dict()

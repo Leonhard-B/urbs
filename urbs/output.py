@@ -93,7 +93,6 @@ def get_timeseries(instance, com, sites, timesteps=None):
         # select relevant timesteps (=rows)
         # select commodity (xs), then the sites from remaining simple columns
         # and sum all together to form a Series
-        pdb.set_trace()
         demand = (pd.DataFrame.from_dict(get_input(instance, 'demand_dict')).loc[timesteps]
                                                .xs(com, axis=1, level=1)[sites]
                                                .sum(axis=1))
