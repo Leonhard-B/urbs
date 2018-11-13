@@ -6,14 +6,14 @@ import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
 from urbs.modelhelper import *
-#delete prob._data (some functions need to be altered), remove prob @prob=run_scenario() and result @result=optim.solve()
+#remove prob @prob=run_scenario() and result @result=optim.solve()
 #in plot.py: import erst in Funktion??
 
 #Breakpoints
 import pdb   
 
 #Memory usage
-#import psutil
+import psutil
 
 #Time measurment
 import time
@@ -116,11 +116,10 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     if str(sce).find("alternative_scenario_new_timeseries") >=0:
-        pdb.set_trace()
         global timeseries_number
-        sce=sce+str(timeseries_number[0])
+        sce=sce+str(timeseries_number.pop())
         filename=os.path.join("input", "{}.xlsx").format(sce)
-        prob=urbs.alternative_scenario_new_timeseries_(prob,0,filename)
+        prob=urbs.alternative_scenario_new_timeseries_(prob, 0, filename)
     else:
         prob=scenario(prob, 0)
     #urbs.validate_input(data)
@@ -160,13 +159,13 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
         periods=plot_periods,
         figure_size=(24, 9))
     if str(sce).find("alternative_scenario_new_timeseries") >=0:
-        urbs.alternative_scenario_new_timeseries_(prob, 1)
+        urbs.alternative_scenario_new_timeseries_(prob, 1, filename)
     else:
         prob = scenario(prob, 1)
     return prob
     
     
-def run_scenario(data, timesteps, scenario, result_dir, dt,
+def run_scenario(input_file, timesteps, scenario, result_dir, dt,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
                  report_tuples=None, report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
@@ -187,33 +186,50 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
     Returns:
         the urbs model instance
     """
-
+    t1=time.time()
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
+    data = urbs.read_excel(input_file)
     #klone Objekt, um Daten nicht erneut auslesen zu müssen
-    data2=deepcopy(data)
-    data2 = scenario(data2)
-    urbs.validate_input(data2)
-
+    #data2=deepcopy(data)
+    #data2 = scenario(data2)
+    #urbs.validate_input(data2)
+    urbs.validate_input(data)
+    t2=time.time()
+    print (t2-t1)
+    t1=time.time()
+    
     # create model
-    prob = urbs.create_model(data2, dt, timesteps)
+    prob = urbs.create_model(data, dt, timesteps)
+    t2=time.time()
+    print (t2-t1)
+    t1=time.time()
     
     #Write model to lp File
     model_filename = os.path.join(result_dir, '{}.lp').format(sce)
     prob.write(model_filename, io_options={"symbolic_solver_labels":True})
+    t2=time.time()
+    print (t2-t1)
+    t1=time.time()
     
     # refresh time stamp string and create filename for logfile
     now = prob.created
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('gurobi')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=True)
+    result = optim.solve(prob, tee=False)
     assert str(result.solver.termination_condition) == 'optimal'
-
+    t2=time.time()
+    print (t2-t1)
+    t1=time.time()
+    
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    t2=time.time()
+    print (t2-t1)
+    t1=time.time()
 
     # write report to spreadsheet
     urbs.report(
@@ -232,17 +248,20 @@ def run_scenario(data, timesteps, scenario, result_dir, dt,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
-
+    t2=time.time()
+    print (t2-t1)
+    t1=time.time()
 
 
 
 if __name__ == '__main__':
+    print ("Load Data + Validation \ncreate model \nwrite .lp \nsetup solver + solve \nwrite .h5 \nplot + report")
     #process = psutil.Process(os.getpid())
     mylist=list()
-    #interval = rupt.setInterval(rupt.myfunc, 1, process, mylist)
+    #interval = rupt.setInterval(rupt.myfunc, 1, process, mylist) # Does not record Solver workspace
     #print("Aktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
-    start_time=time.time()
-    start_time_proc=time.time()
+    #start_time=time.time()
+    #start_time_proc=time.time()
     #Speicherbelegung=list()
     #Speicherbelegung.append(process.memory_info().rss/1000000)
 
@@ -256,8 +275,10 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (3500, 50)  # time step selection
-    timesteps = range(offset, offset+length+1)
+    #(offset, length) = (0, 500)  # time step selection
+    offset_list=[0]
+    lenght_list = [500,400,300,200,100,90,80,70,60, 50, 40, 30, 20,10,9,8,7,6,5,4,3,2]
+    #timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
     # plotting commodities/sites
@@ -279,9 +300,9 @@ if __name__ == '__main__':
     report_sites_name = {'North': 'Greenland'}
 
     # plotting timesteps
-    plot_periods = {
-        'all': timesteps[1:]
-    }
+    #plot_periods = {
+    #    'all': timesteps[1:]
+    #}
 
     # add or change plot colors
     my_colors = {
@@ -291,14 +312,36 @@ if __name__ == '__main__':
     for country, color in my_colors.items():
         urbs.COLORS[country] = color
     
-    timeseries_number=[0]       #Helper number used for global declaration of current timeseries sheet
+    timeseries_number=[]       #Helper number used for global declaration of current timeseries sheet
     # select scenarios to be run
     #normal scenarios must be last, since the base model would be destroyed
     scenarios = [
-        #scenario_base
+        scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
+        ,scenario_base
         #urbs.alternative_scenario_base
-        urbs.alternative_scenario_new_timeseries(timeseries_number,1) #wrapping as string necessary?
-        ,urbs.alternative_scenario_new_timeseries(timeseries_number,2)
+        # urbs.alternative_scenario_new_timeseries(timeseries_number,1)
+        #,urbs.alternative_scenario_new_timeseries(timeseries_number,2)
+        #,urbs.alternative_scenario_new_timeseries(timeseries_number,"Leon")
         # ,urbs.alternative_scenario_co2_tax_mid
         # ,urbs.alternative_scenario_co2_limit
         # ,urbs.alternative_scenario_no_dsm
@@ -315,21 +358,32 @@ if __name__ == '__main__':
         ]
     
     #load Data from Excel sheet
-    data = urbs.read_excel(input_file)
-    urbs.validate_input(data)
+    #data = urbs.read_excel(input_file)
+    #urbs.validate_input(data)
     
     
     for scenario in scenarios:
         #Speicherbelegung.append(process.memory_info().rss/1000000)
-        t1=time.time()
+        #t1=time.time()
         #szenario_start_time=time.time()
+        if offset_list:
+            offset=offset_list.pop()
+            print ("offset: " + str(offset))
+            if prob: # for alternative scenarios: New base model necessary
+                del prob
+        if lenght_list:
+            timesteps=range(offset, offset + lenght_list.pop() + 1)
+            print ("timesteps: " + str (timesteps))
+            if prob:
+                del prob
+        plot_periods = {'all': timesteps[1:]}
         
         #Falls es ein alternatives Szenario ist, soll run_alternative_scenario aufgerufen werden und das prob_base verwendet werden
-        if str(scenario.__name__).find("alternative")>=0 or str(scenario.__name__).find("base")>=0:
+        if str(scenario.__name__).find("alternative")>=0: #or str(scenario.__name__).find("base")>=0:  Warum habe ich das dazu geschrieben?
             try: 
                 prob
             except NameError:
-                prob = urbs.create_model(data, dt, timesteps)
+                prob = urbs.create_model(input_file, dt, timesteps)
             prob = run_alternative_scenario (prob, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
@@ -337,15 +391,15 @@ if __name__ == '__main__':
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
         else:
-            run_scenario(data, timesteps, scenario, result_dir, dt,
+            run_scenario(input_file, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
 
-        t2=time.time()
-        print (str(scenario.__name__) + ": " + str(t2-t1))
+        #t2=time.time()
+        #print (str(scenario.__name__) + ": " + str(t2-t1))
         #current_time=time.time()
         #print (
             #"\nZeit seit Start: " +str(current_time-start_time) +"s" +
@@ -359,6 +413,6 @@ if __name__ == '__main__':
         
     #Speicherbelegung.append(process.memory_info().rss/1000000)
     #print (Speicherbelegung)
-#    interval.cancel() 
-#    for x in range(len(mylist)):
-#        print (mylist[x])
+    #interval.cancel() 
+    #for x in range(len(mylist)):
+    #    print (mylist[x])

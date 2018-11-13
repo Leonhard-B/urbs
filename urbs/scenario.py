@@ -93,11 +93,12 @@ def alternative_scenario_all_together(prob, reverse):
         prob = alternative_scenario_north_process_caps(prob,1)
         return prob
 
-
+# possible extension: Also change timesteps
+# 
 def alternative_scenario_new_timeseries_ (prob, reverse, 
-        filename="input\\alternative_scenario_new_timeseries.xlsx"""):
+        filename="input\\alternative_scenario_new_timeseries.xlsx"):
     if not reverse:
-        sheetnames=load_timeseries (prob,filename, reverse)       
+        sheetnames=load_timeseries (prob, reverse, filename)       
         if "Demand" in sheetnames:
             update_res_vertex(prob)
         if "SupIm" in sheetnames:
@@ -106,9 +107,8 @@ def alternative_scenario_new_timeseries_ (prob, reverse,
             update_cost(prob)
         if 'TimeVarEff' in sheetnames:
             update_TimeVarEff(prob)
-        #del timerseries_number
     if reverse:
-        sheetnames=load_timeseries (prob,filename, reverse)       
+        sheetnames=load_timeseries (prob, reverse, filename)       
         if "Demand" in sheetnames:
             update_res_vertex(prob)
         if "SupIm" in sheetnames:
@@ -119,9 +119,15 @@ def alternative_scenario_new_timeseries_ (prob, reverse,
             update_TimeVarEff(prob)
     return prob
 
-
+# Usage: In main the scenarios are function handles. In order to hand further 
+# information to the scenario function it is necessary to define an external
+# data structure to store the additional information in. This function should
+# be called like this:
+# alternative_scenario_new_timeseries(timeseries_number, <value>)
+# value specifies the path/file extension in order to locate the excel file.
+# value will be appended to input\\alternative_scenario_new_timeseries_
 def alternative_scenario_new_timeseries(timeseries_number, number):
-    timeseries_number[0]=number
+    timeseries_number.insert(0, number)
     return alternative_scenario_new_timeseries_
 
 # Constraint updating funtions:
@@ -250,7 +256,7 @@ def upd_dsm_constraints (prob):
     #not implemented yet
     return prob
 
-def load_timeseries (prob, filename, reverse): #Check für geänderte Größe wichtig?
+def load_timeseries (prob, reverse, filename): #Check für geänderte Größe wichtig?
     with pd.ExcelFile(filename) as xls:
         try: 
             sheetnames = xls.sheet_names
