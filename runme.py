@@ -374,7 +374,10 @@ if __name__ == '__main__':
             timesteps=range(offset, offset + lenght_list.pop() + 1)
             print ("timesteps: " + str (timesteps))
 
-        plot_periods = {'all': timesteps[1:]}
+        if len(timesteps)<=168:
+            plot_periods = {'all': timesteps[1:]}
+        else:
+            plot_periods = {'all': timesteps[1:168]}
         
         #Falls es ein alternatives Szenario ist, soll run_alternative_scenario aufgerufen werden und das prob_base verwendet werden
         if str(scenario.__name__).find("alternative")>=0: #or str(scenario.__name__).find("base")>=0:  Warum habe ich das dazu geschrieben?
