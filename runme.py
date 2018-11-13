@@ -217,7 +217,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('gurobi')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=False)
     assert str(result.solver.termination_condition) == 'optimal'
@@ -369,13 +369,11 @@ if __name__ == '__main__':
         if offset_list:
             offset=offset_list.pop()
             print ("offset: " + str(offset))
-            if prob: # for alternative scenarios: New base model necessary
-                del prob
+
         if lenght_list:
             timesteps=range(offset, offset + lenght_list.pop() + 1)
             print ("timesteps: " + str (timesteps))
-            if prob:
-                del prob
+
         plot_periods = {'all': timesteps[1:]}
         
         #Falls es ein alternatives Szenario ist, soll run_alternative_scenario aufgerufen werden und das prob_base verwendet werden
