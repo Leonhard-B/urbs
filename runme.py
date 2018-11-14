@@ -120,16 +120,53 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     run=20
     print (run)
     while run:
-        run=run-1
         if str(sce).find("alternative_scenario_new_timeseries") >=0:
             global timeseries_number
-            #sce=sce+str(timeseries_number.pop())
+            sce=sce+str(timeseries_number.pop())
             filename=os.path.join("input", "{}.xlsx").format(sce)
             prob=urbs.alternative_scenario_new_timeseries_(prob, 0, filename)
         else:
             prob=scenario(prob, 0)
-    t2=time.time()
-    print (t2-t1)
+    #urbs.validate_input(data)
+
+    # refresh time stamp string and create filename for logfile
+    now = prob.created
+    log_filename = os.path.join(result_dir, '{}.log').format(sce)
+
+    #Write model to lp File
+    model_filename = os.path.join(result_dir, '{}.lp').format(sce)
+    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
+
+    # solve model and read results
+    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = setup_solver(optim, logfile=log_filename)
+    result = optim.solve(prob, tee=False)
+    assert str(result.solver.termination_condition) == 'optimal'
+
+    # save problem solution (and input data) to HDF5 file
+    urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+
+    # write report to spreadsheet
+    urbs.report(
+        prob,
+        os.path.join(result_dir, '{}.xlsx').format(sce),
+        report_tuples=report_tuples,
+        report_sites_name=report_sites_name)
+
+    # result plots
+    urbs.result_figures(
+        prob,
+        os.path.join(result_dir, '{}'.format(sce)),
+        timesteps,
+        plot_title_prefix=sce.replace('_', ' '),
+        plot_tuples=plot_tuples,
+        plot_sites_name=plot_sites_name,
+        periods=plot_periods,
+        figure_size=(24, 9))
+    if str(sce).find("alternative_scenario_new_timeseries") >=0:
+        urbs.alternative_scenario_new_timeseries_(prob, 1, filename)
+    else:
+        prob = scenario(prob, 1)
     return prob
     
     
@@ -165,7 +202,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     print (run)
     while run:
         run=run-1
-        data2 = deepcopy(data)
+        data2=deepcopy(data)
         data2 = scenario(data2)
         #urbs.validate_input(data2)
         #urbs.validate_input(data)
@@ -179,6 +216,53 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     print (t2-t1)
     t1=time.time()
     
+    #Write model to lp File
+    model_filename = os.path.join(result_dir, '{}.lp').format(sce)
+    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
+    t2=time.time()
+    #print (t2-t1)
+    t1=time.time()
+    
+    # refresh time stamp string and create filename for logfile
+    now = prob.created
+    log_filename = os.path.join(result_dir, '{}.log').format(sce)
+
+    # solve model and read results
+    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = setup_solver(optim, logfile=log_filename)
+    
+    result = optim.solve(prob, tee=False)
+    assert str(result.solver.termination_condition) == 'optimal'
+    t2=time.time()
+    #print (t2-t1)
+    t1=time.time()
+    
+    # save problem solution (and input data) to HDF5 file
+    urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    t2=time.time()
+    #print (t2-t1)
+    t1=time.time()
+
+    # write report to spreadsheet
+    urbs.report(
+        prob,
+        os.path.join(result_dir, '{}.xlsx').format(sce),
+        report_tuples=report_tuples,
+        report_sites_name=report_sites_name)
+
+    # result plots
+    urbs.result_figures(
+        prob,
+        os.path.join(result_dir, '{}'.format(sce)),
+        timesteps,
+        plot_title_prefix=sce.replace('_', ' '),
+        plot_tuples=plot_tuples,
+        plot_sites_name=plot_sites_name,
+        periods=plot_periods,
+        figure_size=(24, 9))
+    t2=time.time()
+    #print (t2-t1)
+    t1=time.time()
 
 
 
@@ -205,7 +289,7 @@ if __name__ == '__main__':
     # simulation timesteps
     #(offset, length) = (0, 500)  # time step selection
     offset_list=[0]
-    lenght_list = [500] #[500,400,300,200,100,90,80,70,60, 50, 40, 30, 20,10,9,8,7,6,5,4,3,2]
+    lenght_list = [3] #[500,400,300,200,100,90,80,70,60, 50, 40, 30, 20,10,9,8,7,6,5,4,3,2]
     #timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -285,8 +369,7 @@ if __name__ == '__main__':
                     del prob # prob will be redefined later with correct offset & timestep
                 except NameError:
                     pass
-        
-        # if list is not empty: take the new value from the time list and set new timesteps
+
         if lenght_list:
             timesteps=range(offset, offset + lenght_list.pop() + 1)
             print ("timesteps: " + str (timesteps))
