@@ -92,7 +92,6 @@ def read_excel(filename):
 # preparing the pyomo model
 def pyomo_model_prep(data, timesteps):
     m = pyomo.ConcreteModel()
-
     m.timesteps = timesteps
     process = data['process']
     transmission = data['transmission']  
