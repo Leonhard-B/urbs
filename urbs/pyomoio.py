@@ -15,7 +15,7 @@ def get_entity(instance, name):
     """
     # magic: short-circuit if problem contains a result cache
     # does not work for alternative scenarios
-    #if hasattr(instance, '_result') and name in instance._result:
+    # if hasattr(instance, '_result') and name in instance._result:
     #    return instance._result[name].copy(deep=True)
 
     # retrieve entity, its type and its onset names

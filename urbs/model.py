@@ -1093,6 +1093,16 @@ def res_global_co2_limit_rule(m):
         return pyomo.Constraint.Skip
 
 
+def res_global_cost_limit_rule(m):
+    if math.isinf(m.global_prop_dict["value"]["Cost limit"]):
+        return pyomo.Constraint.Skip
+    elif m.global_prop_dict["value"]["Cost limit"] >= 0:
+        return(pyomo.summation(m.costs) <= m.global_prop_dict["value"]
+                                            ["Cost limit"])
+    else:
+        return pyomo.Constraint.Skip
+
+
 # Objective
 def def_costs_rule(m, cost_type):
     """Calculate total costs by cost type.

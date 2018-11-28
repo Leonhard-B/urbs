@@ -14,6 +14,7 @@ import time
 # helpful information at compile time.
 
 def alternative_scenario_base (prob, reverse):
+    # do nothing
     return prob
 
 
@@ -36,11 +37,11 @@ def alternative_scenario_stock_prices(prob, reverse):
 def alternative_scenario_co2_limit(prob, reverse):
     # change global CO2 limit
     if not reverse:
-        prob.global_prop_dict["value"]["CO2 limit"]*=0.05
+        prob.global_prop_dict["value"]["CO2 limit"] *= 1/20
         update_co2_limit(prob)
         return prob
     if reverse:
-        prob.global_prop_dict["value"]["CO2 limit"]*=20
+        prob.global_prop_dict["value"]["CO2 limit"] *= 20
         update_co2_limit(prob)
         return prob
     
@@ -93,8 +94,7 @@ def alternative_scenario_all_together(prob, reverse):
         prob = alternative_scenario_north_process_caps(prob,1)
         return prob
 
-# possible extension: Also change timesteps
-# 
+
 def alternative_scenario_new_timeseries_ (prob, reverse, 
         filename="input\\alternative_scenario_new_timeseries.xlsx"):
     if not reverse:
@@ -276,7 +276,7 @@ def load_timeseries (prob, reverse, filename): #Check für geänderte Größe wi
                     prob.eff_factor_dict=temp2.to_dict()
         if reverse:
             for temp in sheetnames:
-                if str(temp) == "demand":
+                if str(temp) == "Demand":
                     prob.demand_dict=prob._data["demand"].to_dict()
                 if str(temp) == "SupIm":
                     prob.supim_dict=prob._data["supim"].to_dict()

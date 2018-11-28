@@ -24,6 +24,43 @@ from copy import deepcopy
 #Interrupt
 import interrupt_timer as rupt
 
+#Threading
+from _thread import start_new_thread, allocate_lock
+
+#ensure python 2.7 compatibility
+def threated_plotting_reporting(#prob, result_dir, sce,  report_tuples,
+                                report_sites_name, timesteps, plot_tuples,
+                                plot_sites_name, plot_periods):
+    print ("Hallo")
+    # global num_threads
+    # lock.acquire()
+    # num_threads += 1
+    # lock.release()
+    
+    # write report to spreadsheet
+    # urbs.report(
+        # prob,
+        # os.path.join(result_dir, '{}.xlsx').format(sce),
+        # report_tuples=report_tuples,
+        # report_sites_name=report_sites_name)
+
+    # result plots
+    # urbs.result_figures(
+        # prob,
+        # os.path.join(result_dir, '{}'.format(sce)),
+        # timesteps,
+        # plot_title_prefix=sce.replace('_', ' '),
+        # plot_tuples=plot_tuples,
+        # plot_sites_name=plot_sites_name,
+        # periods=plot_periods,
+        # figure_size=(24, 9))
+    # prob = scenario(prob, True, filename)
+    
+    # lock.acquire()
+    # num_threads -= 1
+    # lock.release()
+    
+
 # SCENARIOS
 def scenario_base(data):
     # do nothing
@@ -116,17 +153,14 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     
-    t1=time.time()
-    run=20
-    print (run)
-    while run:
-        if str(sce).find("alternative_scenario_new_timeseries") >=0:
-            global timeseries_number
-            sce=sce+str(timeseries_number.pop())
-            filename=os.path.join("input", "{}.xlsx").format(sce)
-            prob=urbs.alternative_scenario_new_timeseries_(prob, 0, filename)
-        else:
-            prob=scenario(prob, 0)
+    #t1=time.time()
+    if str(sce).find("alternative_scenario_new_timeseries") >=0:
+        global timeseries_number
+        sce=sce+str(timeseries_number.pop())
+        filename=os.path.join("input", "{}.xlsx").format(sce)
+        prob=urbs.alternative_scenario_new_timeseries_(prob, 0, filename)
+    else:
+        prob=scenario(prob, 0)
     #urbs.validate_input(data)
 
     # refresh time stamp string and create filename for logfile
@@ -140,35 +174,26 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=False)
+    result = optim.solve(prob, tee=True)
     assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
-
-    # write report to spreadsheet
-    urbs.report(
-        prob,
-        os.path.join(result_dir, '{}.xlsx').format(sce),
-        report_tuples=report_tuples,
-        report_sites_name=report_sites_name)
-
-    # result plots
-    urbs.result_figures(
-        prob,
-        os.path.join(result_dir, '{}'.format(sce)),
-        timesteps,
-        plot_title_prefix=sce.replace('_', ' '),
-        plot_tuples=plot_tuples,
-        plot_sites_name=plot_sites_name,
-        periods=plot_periods,
-        figure_size=(24, 9))
+    print("Hallo vorher")
+    start_new_thread(threated_plotting_reporting, (#prob, result_dir, sce,  report_tuples,
+                                report_sites_name, timesteps, plot_tuples,
+                                plot_sites_name, plot_periods),)
+    print ("Hallo neu!")
     if str(sce).find("alternative_scenario_new_timeseries") >=0:
         urbs.alternative_scenario_new_timeseries_(prob, 1, filename)
     else:
         prob = scenario(prob, 1)
-    return prob
+
+    #Write model to lp File
+    model_filename = os.path.join(result_dir, '{}_base.lp').format(sce)
+    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
     
+    return prob
     
 def run_scenario(input_file, timesteps, scenario, result_dir, dt,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
@@ -194,24 +219,20 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    
-    data = urbs.read_excel(input_file)
-    #klone Objekt, um Daten nicht erneut auslesen zu müssen
     t1=time.time()
-    run=2
-    print (run)
-    while run:
-        run=run-1
-        data2=deepcopy(data)
-        data2 = scenario(data2)
-        #urbs.validate_input(data2)
-        #urbs.validate_input(data)
-        #t2=time.time()
-        #print (t2-t1)
-        #t1=time.time()
-        
-        # create model
-        prob = urbs.create_model(data, dt, timesteps)
+    data = urbs.read_excel(input_file)
+    
+    #klone Objekt, um Daten nicht erneut auslesen zu müssen
+    #data2=deepcopy(data)
+    data = scenario(data)
+    #urbs.validate_input(data2)
+    urbs.validate_input(data)
+    t2=time.time()
+    print (t2-t1)
+    t1=time.time()
+    
+    # create model
+    prob = urbs.create_model(data, dt, timesteps)
     t2=time.time()
     print (t2-t1)
     t1=time.time()
@@ -220,7 +241,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     model_filename = os.path.join(result_dir, '{}.lp').format(sce)
     prob.write(model_filename, io_options={"symbolic_solver_labels":True})
     t2=time.time()
-    #print (t2-t1)
+    print (t2-t1)
     t1=time.time()
     
     # refresh time stamp string and create filename for logfile
@@ -234,13 +255,13 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     result = optim.solve(prob, tee=False)
     assert str(result.solver.termination_condition) == 'optimal'
     t2=time.time()
-    #print (t2-t1)
+    print (t2-t1)
     t1=time.time()
     
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
     t2=time.time()
-    #print (t2-t1)
+    print (t2-t1)
     t1=time.time()
 
     # write report to spreadsheet
@@ -261,13 +282,20 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
         periods=plot_periods,
         figure_size=(24, 9))
     t2=time.time()
-    #print (t2-t1)
+    print (t2-t1)
     t1=time.time()
+    
+    #Write model to lp File
+    model_filename = os.path.join(result_dir, '{}_base.lp').format(sce)
+    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
 
 
 
 if __name__ == '__main__':
-    print ("Load Data + Validation \ncreate model \nwrite .lp \nsetup solver + solve \nwrite .h5 \nplot + report")
+    num_threads=0
+    lock = allocate_lock()
+    pdb.set_trace()
+    #print ("Load Data + Validation \ncreate model \nwrite .lp \nsetup solver + solve \nwrite .h5 \nplot + report")
     #process = psutil.Process(os.getpid())
     mylist=list()
     #interval = rupt.setInterval(rupt.myfunc, 1, process, mylist) # Does not record Solver workspace
@@ -288,8 +316,8 @@ if __name__ == '__main__':
 
     # simulation timesteps
     #(offset, length) = (0, 500)  # time step selection
-    offset_list=[0]
-    lenght_list = [3] #[500,400,300,200,100,90,80,70,60, 50, 40, 30, 20,10,9,8,7,6,5,4,3,2]
+    offset_list=[3500]
+    lenght_list = [168] #[500,400,300,200,100,90,80,70,60, 50, 40, 30, 20,10,9,8,7,6,5,4,3,2]
     #timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -328,25 +356,29 @@ if __name__ == '__main__':
     # select scenarios to be run
     #normal scenarios must be last, since the base model would be destroyed
     scenarios = [
-        scenario_base
-        , urbs.alternative_scenario_new_timeseries (timeseries_number, 1)
+        #urbs.alternative_scenario_base
+        #scenario_co2_limit
+        # urbs.alternative_scenario_co2_limit
+        #scenario_base
+        #, urbs.alternative_scenario_new_timeseries (timeseries_number, 1)
         # ,urbs.alternative_scenario_no_dsm
-        # ,urbs.alternative_scenario_new_timeseries(timeseries_number,1)
+        #,urbs.alternative_scenario_new_timeseries(timeseries_number,1)
         # ,urbs.alternative_scenario_new_timeseries(timeseries_number,2)
         # ,urbs.alternative_scenario_new_timeseries(timeseries_number,"Leon")
-        # ,urbs.alternative_scenario_co2_tax_mid
-        # ,urbs.alternative_scenario_co2_limit
-        # ,urbs.alternative_scenario_no_dsm
-        # ,urbs.alternative_scenario_north_process_caps
-        # ,urbs.alternative_scenario_stock_prices
-        # ,urbs.alternative_scenario_all_together
+        #,urbs.alternative_scenario_co2_tax_mid
+        #,urbs.alternative_scenario_co2_limit
+        urbs.alternative_scenario_no_dsm
+        ,urbs.alternative_scenario_north_process_caps
+        #,urbs.alternative_scenario_stock_prices
+        #,urbs.alternative_scenario_all_together
         
         # ,scenario_co2_tax_mid
-        # ,scenario_co2_limit
+        # scenario_co2_limit
         # ,scenario_no_dsm
         # ,scenario_north_process_caps
         # ,scenario_stock_prices
-        # ,scenario_all_together
+        #,urbs.alternative_scenario_all_together
+        ,urbs.alternative_scenario_new_timeseries(timeseries_number,1)
         ]
     
     #load Data from Excel sheet
@@ -404,7 +436,11 @@ if __name__ == '__main__':
                             plot_periods=plot_periods,
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
-
+        
+        # Wait until the threads doing the plotting are finished
+        while num_threads > 0:
+            pass
+        
         #t2=time.time()
         #print (str(scenario.__name__) + ": " + str(t2-t1))
         #current_time=time.time()
