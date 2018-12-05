@@ -214,7 +214,7 @@ def get_input(prob, name):
         the corresponding input DataFrame
 
     """
-
+    #pdb.set_trace()
     if hasattr(prob, name):
         # classic case: input data DataFrames are accessible via named
         # attributes, e.g. `prob.process`.

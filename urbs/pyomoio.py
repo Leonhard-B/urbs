@@ -1,6 +1,6 @@
 import pandas as pd
 import pyomo.core as pyomo
-
+import pdb
 
 def get_entity(instance, name):
     """ Retrieve values (or duals) for an entity in a model instance.
@@ -110,20 +110,20 @@ def get_entities(instance, names):
     Returns:
         a Pandas DataFrame with entities as columns and domains as index
     """
-
+    #pdb.set_trace()
     df = pd.DataFrame()
     for name in names:
-        other = get_entity(instance, name)
+        other = instance[name].to_frame()
 
         if df.empty:
-            df = other.to_frame()
+            df = other
         else:
-            index_names_before = df.index.names
-
+            #index_names_before = df.index.names
+            other2 = other.reindex(index=df.index, level=0)
             df = df.join(other, how='outer')
 
-            if index_names_before != df.index.names:
-                df.index.names = index_names_before
+            #if index_names_before != df.index.names:
+            #    df.index.names = index_names_before
 
     return df
 

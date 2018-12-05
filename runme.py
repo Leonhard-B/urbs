@@ -25,66 +25,45 @@ from copy import deepcopy
 import interrupt_timer as rupt
 
 #Threading
-from _thread import start_new_thread, allocate_lock
+from _thread import start_new_thread, allocate_lock # ToDo: ensure python 2.7 compatibility
 
-#ensure python 2.7 compatibility
+
 def threated_plotting_reporting(#prob, result_dir, sce,  report_tuples,
                                 report_sites_name, timesteps, plot_tuples,
                                 plot_sites_name, plot_periods):
     print ("Hallo")
-    '''
-    global num_threads
+    
+    global num_threads  #Write this to data.py, s.t. this function can be outsourced
     lock.acquire()
     num_threads += 1
     lock.release()
     
-    urbs_path = os.path.join(folder_in, subfolder, scenarios[scen]+dt_h5)
-    helpdf = urbs.load(urbs_path)
-        helpdf = helpdf._result
+    urbs_path = os.path.join(result_dir, "{}.h5").format(sce)
+    h5 = urbs.load(urbs_path)
+    h5 = h5._result
     
-    # Filter results
-    urbs_results[scen] = helpdf['e_pro_out'].unstack()
     
-    # Get Elec data
-    urbs_elec[scen] = urbs_results[scen]['Elec'].reorder_levels(['sit', 'pro', 't']).sort_index()
-    urbs_elec_ts[scen] = urbs_elec[scen].unstack(level=0).unstack(level=0)
-    urbs_elec_ts_ger[scen] = urbs_elec[scen].unstack(level=1).unstack(level=1).sum(axis=0).unstack().T.sum(axis=0)
-    
-    # Get CO2 data
-    urbs_co2[scen] = urbs_results[scen]['CO2'].reorder_levels(['sit', 'pro', 't']).sort_index()
-    urbs_co2_ts[scen] = urbs_co2[scen].unstack(level=0).unstack(level=0)
-    urbs_co2_ts_ger[scen] = urbs_co2[scen].unstack(level=1).unstack(level=1).sum(axis=0).unstack().T.sum(axis=0)
-    
-    # Get Transmission data
-    urbs_tra[scen] = helpdf['cap_tra'].unstack()
-    urbs_tra_new[scen] = helpdf['cap_tra_new'].unstack()
-    urbs_tra_e_in[scen] = helpdf['e_tra_in']
-    urbs_tra_e_out[scen] = helpdf['e_tra_out']
-    
-    # Get process capacities
-    urbs_cap[scen] = helpdf['cap_pro'].unstack()
-    urbs_cap_new[scen] = helpdf['cap_pro_new'].unstack()
     
     # Get curtailment data
-    urbs_curt[scen] = helpdf['e_pro_in'].unstack(level=3)['Elec'].unstack(level=2)['Curtailment'].unstack(level=1)
+    urbs_curt[scen] = h5['e_pro_in'].unstack(level=3)['Elec'].unstack(level=2)['Curtailment'].unstack(level=1)
 
     # Get storage data
-    urbs_sto_in[scen] = helpdf['e_sto_in']
-    urbs_sto_out[scen] = helpdf['e_sto_out']
+    urbs_sto_in[scen] = h5['e_sto_in']
+    urbs_sto_out[scen] = h5['e_sto_out']
     
     # Get scenario costs
-    urbs_cost[scen] = helpdf['costs']
+    urbs_cost[scen] = h5['costs']
     
     # write report to spreadsheet
     urbs.report(
-        prob,
+        h5,
         os.path.join(result_dir, '{}.xlsx').format(sce),
         report_tuples=report_tuples,
         report_sites_name=report_sites_name)
 
     # result plots
     urbs.result_figures(
-        prob,
+        h5,
         os.path.join(result_dir, '{}'.format(sce)),
         timesteps,
         plot_title_prefix=sce.replace('_', ' '),
@@ -97,7 +76,7 @@ def threated_plotting_reporting(#prob, result_dir, sce,  report_tuples,
     lock.acquire()
     num_threads -= 1
     lock.release()
-    '''
+    
 
 # SCENARIOS
 def scenario_base(data):
@@ -301,17 +280,25 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     t2=time.time()
     print (t2-t1)
     t1=time.time()
-
+    #pdb.set_trace()
+    
+    urbs_path = os.path.join(result_dir, "{}.h5").format(sce)
+    h5 = urbs.load(urbs_path)
+    #h5 = h5._result
+        
+    import pdb
+    pdb.set_trace()
     # write report to spreadsheet
+    ''' 
     urbs.report(
-        prob,
+        h5,
         os.path.join(result_dir, '{}.xlsx').format(sce),
         report_tuples=report_tuples,
         report_sites_name=report_sites_name)
-
+    '''
     # result plots
     urbs.result_figures(
-        prob,
+        h5,
         os.path.join(result_dir, '{}'.format(sce)),
         timesteps,
         plot_title_prefix=sce.replace('_', ' '),
@@ -330,9 +317,18 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
 
 
 if __name__ == '__main__':
+    t1=time.time()
+    i=100000
+    while (i):
+        try:
+            prob.unsinn=1
+            i=i-1
+        except NameError:
+            i=i-1
+    t2=time.time()
+    print (t2-t1)
     num_threads=0
     lock = allocate_lock()
-    pdb.set_trace()
     #print ("Load Data + Validation \ncreate model \nwrite .lp \nsetup solver + solve \nwrite .h5 \nplot + report")
     #process = psutil.Process(os.getpid())
     mylist=list()
@@ -355,7 +351,7 @@ if __name__ == '__main__':
     # simulation timesteps
     #(offset, length) = (0, 500)  # time step selection
     offset_list=[3500]
-    lenght_list = [168] #[500,400,300,200,100,90,80,70,60, 50, 40, 30, 20,10,9,8,7,6,5,4,3,2]
+    lenght_list = [2] #[500,400,300,200,100,90,80,70,60, 50, 40, 30, 20,10,9,8,7,6,5,4,3,2]
     #timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -397,7 +393,7 @@ if __name__ == '__main__':
         #urbs.alternative_scenario_base
         #scenario_co2_limit
         # urbs.alternative_scenario_co2_limit
-        #scenario_base
+        scenario_base
         #, urbs.alternative_scenario_new_timeseries (timeseries_number, 1)
         # ,urbs.alternative_scenario_no_dsm
         #,urbs.alternative_scenario_new_timeseries(timeseries_number,1)
@@ -405,8 +401,8 @@ if __name__ == '__main__':
         # ,urbs.alternative_scenario_new_timeseries(timeseries_number,"Leon")
         #,urbs.alternative_scenario_co2_tax_mid
         #,urbs.alternative_scenario_co2_limit
-        urbs.alternative_scenario_no_dsm
-        ,urbs.alternative_scenario_north_process_caps
+        #,urbs.alternative_scenario_no_dsm
+        #,urbs.alternative_scenario_north_process_caps
         #,urbs.alternative_scenario_stock_prices
         #,urbs.alternative_scenario_all_together
         
