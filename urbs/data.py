@@ -28,3 +28,5 @@ COLORS = {
     'Purchase': (0, 51, 89),
     'Startup': (105, 8, 90),
     'Variable': (128, 153, 172)}
+
+num_threads=0

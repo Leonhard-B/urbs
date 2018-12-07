@@ -6,6 +6,7 @@ import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
 from urbs.modelhelper import *
+import pdb
 #remove prob @prob=run_scenario() and result @result=optim.solve()
 #in plot.py: import erst in Funktion??
 
@@ -25,57 +26,63 @@ from copy import deepcopy
 import interrupt_timer as rupt
 
 #Threading
-from _thread import start_new_thread, allocate_lock # ToDo: ensure python 2.7 compatibility
+import threading
+#from threading import start_new_thread, allocate_lock # ToDo: ensure python 2.7 compatibility
+from urbs.data import num_threads
 
 
-def threated_plotting_reporting(#prob, result_dir, sce,  report_tuples,
+class threaded_plotting_reporting2 (threading.Thread):
+    def __init__(self,  result_dir, sce,  report_tuples,
                                 report_sites_name, timesteps, plot_tuples,
                                 plot_sites_name, plot_periods):
-    print ("Hallo")
-    
-    global num_threads  #Write this to data.py, s.t. this function can be outsourced
-    lock.acquire()
-    num_threads += 1
-    lock.release()
-    
-    urbs_path = os.path.join(result_dir, "{}.h5").format(sce)
-    h5 = urbs.load(urbs_path)
-    h5 = h5._result
-    
-    
-    
-    # Get curtailment data
-    urbs_curt[scen] = h5['e_pro_in'].unstack(level=3)['Elec'].unstack(level=2)['Curtailment'].unstack(level=1)
+        threading.Thread.__init__(self)
+        self.result_dir=result_dir
+        self.sce=sce
+        self.report_tuples=report_tuples
+        self.report_sites_name=report_sites_name
+        self.timesteps=timesteps
+        self.plot_tuples=plot_tuples
+        self.plot_sites_name=plot_sites_name
+        self.plot_periods=plot_periods
 
-    # Get storage data
-    urbs_sto_in[scen] = h5['e_sto_in']
-    urbs_sto_out[scen] = h5['e_sto_out']
-    
-    # Get scenario costs
-    urbs_cost[scen] = h5['costs']
-    
-    # write report to spreadsheet
-    urbs.report(
-        h5,
-        os.path.join(result_dir, '{}.xlsx').format(sce),
-        report_tuples=report_tuples,
-        report_sites_name=report_sites_name)
+    def run (self):
+        """
+def threated_plotting_reporting(result_dir, sce,  report_tuples,
+                                report_sites_name, timesteps, plot_tuples,
+                                plot_sites_name, plot_periods):
+        """
+        print ("Starting plotting " + str(self.sce))
 
-    # result plots
-    urbs.result_figures(
-        h5,
-        os.path.join(result_dir, '{}'.format(sce)),
-        timesteps,
-        plot_title_prefix=sce.replace('_', ' '),
-        plot_tuples=plot_tuples,
-        plot_sites_name=plot_sites_name,
-        periods=plot_periods,
-        figure_size=(24, 9))
-    prob = scenario(prob, True, filename)
-    
-    lock.acquire()
-    num_threads -= 1
-    lock.release()
+        #lock.acquire()
+        #urbs.data.num_threads += 1
+        #lock.release()
+
+        # load the model/h5 file corresponding to 'sce'
+        urbs_path = os.path.join(self.result_dir, "{}.h5").format(self.sce)
+        h5 = urbs.load(urbs_path)
+        
+        # write report to spreadsheet
+        urbs.report(
+            h5,
+            os.path.join(self.result_dir, '{}.xlsx').format(self.sce),
+            report_tuples=self.report_tuples,
+            report_sites_name=self.report_sites_name)
+
+        # result plots
+        urbs.result_figures(
+            h5,
+            os.path.join(self.result_dir, '{}'.format(self.sce)),
+            self.timesteps,
+            plot_title_prefix=self.sce.replace('_', ' '),
+            plot_tuples=self.plot_tuples,
+            plot_sites_name=self.plot_sites_name,
+            periods=self.plot_periods,
+            figure_size=(24, 9))
+
+        print ("Feddisch plotting " + str(self.sce))
+        #lock.acquire()
+        #urbs.data.num_threads -= 1
+        #lock.release()
     
 
 # SCENARIOS
@@ -196,11 +203,16 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
-    print("Hallo vorher")
-    start_new_thread(threated_plotting_reporting, (#prob, result_dir, sce,  report_tuples,
+
+    # start serialized plotting
+    Thread1=threaded_plotting_reporting2(result_dir, sce,  report_tuples,
                                 report_sites_name, timesteps, plot_tuples,
-                                plot_sites_name, plot_periods),)
-    print ("Hallo neu!")
+                                plot_sites_name, plot_periods)
+    Thread1.start()
+    
+    #start_new_thread(threated_plotting_reporting, (result_dir, sce,  report_tuples,
+    #                            report_sites_name, timesteps, plot_tuples,
+    #                            plot_sites_name, plot_periods),)
     if str(sce).find("alternative_scenario_new_timeseries") >=0:
         urbs.alternative_scenario_new_timeseries_(prob, 1, filename)
     else:
@@ -286,16 +298,14 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     h5 = urbs.load(urbs_path)
     #h5 = h5._result
         
-    import pdb
-    pdb.set_trace()
     # write report to spreadsheet
-    ''' 
+
     urbs.report(
         h5,
         os.path.join(result_dir, '{}.xlsx').format(sce),
         report_tuples=report_tuples,
         report_sites_name=report_sites_name)
-    '''
+
     # result plots
     urbs.result_figures(
         h5,
@@ -317,18 +327,8 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
 
 
 if __name__ == '__main__':
-    t1=time.time()
-    i=100000
-    while (i):
-        try:
-            prob.unsinn=1
-            i=i-1
-        except NameError:
-            i=i-1
-    t2=time.time()
-    print (t2-t1)
-    num_threads=0
-    lock = allocate_lock()
+    #num_threads=0
+    #lock = allocate_lock()
     #print ("Load Data + Validation \ncreate model \nwrite .lp \nsetup solver + solve \nwrite .h5 \nplot + report")
     #process = psutil.Process(os.getpid())
     mylist=list()
@@ -351,7 +351,7 @@ if __name__ == '__main__':
     # simulation timesteps
     #(offset, length) = (0, 500)  # time step selection
     offset_list=[3500]
-    lenght_list = [2] #[500,400,300,200,100,90,80,70,60, 50, 40, 30, 20,10,9,8,7,6,5,4,3,2]
+    lenght_list = [3] #[500,400,300,200,100,90,80,70,60, 50, 40, 30, 20,10,9,8,7,6,5,4,3,2]
     #timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -390,10 +390,10 @@ if __name__ == '__main__':
     # select scenarios to be run
     #normal scenarios must be last, since the base model would be destroyed
     scenarios = [
-        #urbs.alternative_scenario_base
+        urbs.alternative_scenario_base
         #scenario_co2_limit
         # urbs.alternative_scenario_co2_limit
-        scenario_base
+        #scenario_base
         #, urbs.alternative_scenario_new_timeseries (timeseries_number, 1)
         # ,urbs.alternative_scenario_no_dsm
         #,urbs.alternative_scenario_new_timeseries(timeseries_number,1)
@@ -472,9 +472,10 @@ if __name__ == '__main__':
                             report_sites_name=report_sites_name)
         
         # Wait until the threads doing the plotting are finished
-        while num_threads > 0:
-            pass
-        
+    print ("Waiting for plotting")
+    while urbs.data.num_threads > 0:
+        time.sleep(1)
+    time.sleep(1)
         #t2=time.time()
         #print (str(scenario.__name__) + ": " + str(t2-t1))
         #current_time=time.time()

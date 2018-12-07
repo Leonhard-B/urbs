@@ -15,27 +15,12 @@ def get_constants(h5):
 
     Returns:
         (costs, cpro, ctra, csto) tuple
-
-    Example:
-        >>> import pyomo.environ
-        >>> from pyomo.opt.base import SolverFactory
-        >>> data = read_excel('mimo-example.xlsx')
-        >>> prob = create_model(data, range(1,25))
-        >>> optim = SolverFactory('glpk')
-        >>> result = optim.solve(prob)
-        >>> cap_pro = get_constants(prob)[1]['Total']
-        >>> cap_pro.xs('Wind park', level='Process').apply(int)
-        Site
-        Mid      13000
-        North    23258
-        South        0
-        Name: Total, dtype: int64
     """
-    costs = h5._result["costs"]
-    cpro = get_entities(h5._result, ['cap_pro', 'cap_pro_new'])
-    ctra = get_entities(h5._result, ['cap_tra', 'cap_tra_new'])
+    costs = h5._result["costs"].copy()
+    cpro = get_entities(h5._result, ['cap_pro', 'cap_pro_new']).copy()
+    ctra = get_entities(h5._result, ['cap_tra', 'cap_tra_new']).copy()
     csto = get_entities(h5._result, ['cap_sto_c', 'cap_sto_c_new',
-                                   'cap_sto_p', 'cap_sto_p_new'])
+                                   'cap_sto_p', 'cap_sto_p_new']).copy()
     """cpro =pd.DataFrame()
     for name in ["cap_pro", "cap_pro_new"]:
         cpro = cpro.join(pd.DataFrame(h5._result[name]), how= "outer")
@@ -235,8 +220,6 @@ def get_timeseries(h5, com, sites, timesteps=None):
     # JOINS
     created = created.join(stock)  # show stock as created
     consumed = consumed.join(shifted.rename('Demand'))
-    print ("Leonhard")
-    #pdb.set_trace()
     return created, consumed, stored, imported, exported, dsm
 
 

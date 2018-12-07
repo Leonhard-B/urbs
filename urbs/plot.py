@@ -85,8 +85,7 @@ def plot(h5, com, sit, dt, timesteps, timesteps_plot,
     Returns:
         fig: figure handle
     """
-    
-    #pdb.set_trace()
+
     if timesteps is None:
         # default to all simulated timesteps
         timesteps = sorted(h5._result['tm'].index)
@@ -94,7 +93,6 @@ def plot(h5, com, sit, dt, timesteps, timesteps_plot,
     # convert timesteps to hour series for the plots
     hoursteps = timesteps * dt[0]
     hoursteps_plot = timesteps_plot * dt[0]
-    print ("Huhu")
     if is_string(sit):
         # wrap single site in 1-element list for consistent behaviour
         sit = [sit]
@@ -311,7 +309,6 @@ def plot(h5, com, sit, dt, timesteps, timesteps_plot,
             skip_lowest = mpl.ticker.FuncFormatter(
                 lambda y, pos: '' if pos == 0 else y)
             ax.yaxis.set_major_formatter(skip_lowest)
-
     return fig
 
 

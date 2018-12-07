@@ -113,13 +113,13 @@ def get_entities(instance, names):
     #pdb.set_trace()
     df = pd.DataFrame()
     for name in names:
-        other = instance[name].to_frame()
-
+        other = pd.DataFrame(instance[name])
+        #pdb.set_trace()
         if df.empty:
             df = other
         else:
             #index_names_before = df.index.names
-            other2 = other.reindex(index=df.index, level=0)
+            #other2 = other.reindex(index=df.index, level=0)
             df = df.join(other, how='outer')
 
             #if index_names_before != df.index.names:
