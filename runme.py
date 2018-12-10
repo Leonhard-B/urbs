@@ -31,7 +31,7 @@ import threading
 from urbs.data import num_threads
 
 
-class threaded_plotting_reporting2 (threading.Thread):
+"""class threaded_plotting_reporting2 (threading.Thread):
     def __init__(self,  result_dir, sce,  report_tuples,
                                 report_sites_name, timesteps, plot_tuples,
                                 plot_sites_name, plot_periods):
@@ -47,39 +47,39 @@ class threaded_plotting_reporting2 (threading.Thread):
 
     def run (self):
         """
-def threated_plotting_reporting(result_dir, sce,  report_tuples,
+def threaded_plotting_reporting(result_dir, sce,  report_tuples,
                                 report_sites_name, timesteps, plot_tuples,
                                 plot_sites_name, plot_periods):
-        """
-        print ("Starting plotting " + str(self.sce))
+        
+        print ("Starting plotting " + str(sce))
 
         #lock.acquire()
         #urbs.data.num_threads += 1
         #lock.release()
 
         # load the model/h5 file corresponding to 'sce'
-        urbs_path = os.path.join(self.result_dir, "{}.h5").format(self.sce)
+        urbs_path = os.path.join(result_dir, "{}.h5").format(sce)
         h5 = urbs.load(urbs_path)
         
         # write report to spreadsheet
         urbs.report(
             h5,
-            os.path.join(self.result_dir, '{}.xlsx').format(self.sce),
-            report_tuples=self.report_tuples,
-            report_sites_name=self.report_sites_name)
+            os.path.join(result_dir, '{}.xlsx').format(sce),
+            report_tuples=report_tuples,
+            report_sites_name=report_sites_name)
 
         # result plots
         urbs.result_figures(
             h5,
-            os.path.join(self.result_dir, '{}'.format(self.sce)),
-            self.timesteps,
-            plot_title_prefix=self.sce.replace('_', ' '),
-            plot_tuples=self.plot_tuples,
-            plot_sites_name=self.plot_sites_name,
-            periods=self.plot_periods,
+            os.path.join(result_dir, '{}'.format(sce)),
+            timesteps,
+            plot_title_prefix=sce.replace('_', ' '),
+            plot_tuples=plot_tuples,
+            plot_sites_name=plot_sites_name,
+            periods=plot_periods,
             figure_size=(24, 9))
 
-        print ("Feddisch plotting " + str(self.sce))
+        print ("Feddisch plotting " + str(sce))
         #lock.acquire()
         #urbs.data.num_threads -= 1
         #lock.release()
@@ -198,18 +198,35 @@ def run_alternative_scenario(prob, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=True)
+    result = optim.solve(prob, tee=False)
     assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
     # start serialized plotting
-    Thread1=threaded_plotting_reporting2(result_dir, sce,  report_tuples,
+    Thread1= threading.Thread(target=threaded_plotting_reporting, args=(result_dir, sce,  report_tuples,
                                 report_sites_name, timesteps, plot_tuples,
-                                plot_sites_name, plot_periods)
+                                plot_sites_name, plot_periods))
     Thread1.start()
-    
+    """
+    urbs.report(
+        prob,
+        os.path.join(result_dir, '{}.xlsx').format(sce),
+        report_tuples=report_tuples,
+        report_sites_name=report_sites_name)
+
+    # result plots
+    urbs.result_figures(
+        prob,
+        os.path.join(result_dir, '{}'.format(sce)),
+        timesteps,
+        plot_title_prefix=sce.replace('_', ' '),
+        plot_tuples=plot_tuples,
+        plot_sites_name=plot_sites_name,
+        periods=plot_periods,
+        figure_size=(24, 9))
+    """
     #start_new_thread(threated_plotting_reporting, (result_dir, sce,  report_tuples,
     #                            report_sites_name, timesteps, plot_tuples,
     #                            plot_sites_name, plot_periods),)
@@ -334,7 +351,7 @@ if __name__ == '__main__':
     mylist=list()
     #interval = rupt.setInterval(rupt.myfunc, 1, process, mylist) # Does not record Solver workspace
     #print("Aktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n")
-    #start_time=time.time()
+    start_time=time.time()
     #start_time_proc=time.time()
     #Speicherbelegung=list()
     #Speicherbelegung.append(process.memory_info().rss/1000000)
@@ -351,7 +368,7 @@ if __name__ == '__main__':
     # simulation timesteps
     #(offset, length) = (0, 500)  # time step selection
     offset_list=[3500]
-    lenght_list = [3] #[500,400,300,200,100,90,80,70,60, 50, 40, 30, 20,10,9,8,7,6,5,4,3,2]
+    lenght_list = [100] #[500,400,300,200,100,90,80,70,60, 50, 40, 30, 20,10,9,8,7,6,5,4,3,2]
     #timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -412,7 +429,16 @@ if __name__ == '__main__':
         # ,scenario_north_process_caps
         # ,scenario_stock_prices
         #,urbs.alternative_scenario_all_together
+        ,urbs.alternative_scenario_new_timeseries(timeseries_number,0)
         ,urbs.alternative_scenario_new_timeseries(timeseries_number,1)
+        ,urbs.alternative_scenario_new_timeseries(timeseries_number,2)
+        ,urbs.alternative_scenario_new_timeseries(timeseries_number,3)
+        ,urbs.alternative_scenario_new_timeseries(timeseries_number,4)
+        ,urbs.alternative_scenario_new_timeseries(timeseries_number,5)
+        ,urbs.alternative_scenario_new_timeseries(timeseries_number,6)
+        ,urbs.alternative_scenario_new_timeseries(timeseries_number,7)
+        ,urbs.alternative_scenario_new_timeseries(timeseries_number,8)
+        ,urbs.alternative_scenario_new_timeseries(timeseries_number,9)
         ]
     
     #load Data from Excel sheet
@@ -422,8 +448,8 @@ if __name__ == '__main__':
     
     for scenario in scenarios:
         #Speicherbelegung.append(process.memory_info().rss/1000000)
-        #t1=time.time()
-        #szenario_start_time=time.time()
+        t1=time.time()
+        szenario_start_time=time.time()
         
         # Set new Offset
         if offset_list:
@@ -472,21 +498,22 @@ if __name__ == '__main__':
                             report_sites_name=report_sites_name)
         
         # Wait until the threads doing the plotting are finished
-    print ("Waiting for plotting")
-    while urbs.data.num_threads > 0:
-        time.sleep(1)
-    time.sleep(1)
-        #t2=time.time()
-        #print (str(scenario.__name__) + ": " + str(t2-t1))
-        #current_time=time.time()
-        #print (
-            #"\nZeit seit Start: " +str(current_time-start_time) +"s" +
+
+        t2=time.time()
+        print ("\n"+str(scenario.__name__) + ": " + str(t2-t1))
+        current_time=time.time()
+        print (
+            "Zeit seit Start: " +str(current_time-start_time) +"s\n" 
             #"\nRechenzeit seit Start: "+str(t2-start_time_proc)+"s" +
-            #"\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s\n"+
+            #"\nZeit für Szenario: "+str(current_time-szenario_start_time)+"s\n"
             #"Rechenzeit für " + str(i+1) + " Szenarios: "+str(t2-t1)+"s"
             #+"\nAktuelle Speicherbelegung: " + str(process.memory_info().rss/1000000) + " MB\n"
-            #)
-        
+            )
+    print ("Waiting for plotting:")
+    while urbs.data.num_threads > 0:
+        time.sleep(1)
+    print (str(time.time()-t2) + " s")
+    time.sleep(1)    
 
         
     #Speicherbelegung.append(process.memory_info().rss/1000000)
